@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tradesnap - AI Trading Simulator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .font-mono {
+      font-family: 'Roboto Mono', monospace;
+    }
+    /* Smooth transitions for theme changes */
+    .bg-grid-cyan-500\/10 {
+        background-image: linear-gradient(rgb(var(--tw-gradient-to-color, transparent)) 1px, transparent 1px), linear-gradient(to right, rgb(var(--tw-gradient-to-color, transparent)) 1px, transparent 1px);
+        background-size: 1.5rem 1.5rem;
+    }
+    html.light .bg-grid-cyan-500\/10 {
+        --tw-gradient-to-color: theme('colors.sky.300 / 0.2');
+    }
+     html.dark .bg-grid-cyan-500\/10 {
+        --tw-gradient-to-color: theme('colors.cyan.500 / 0.1');
+    }
+  </style>
+
+<link rel="stylesheet" href="/index.css">
+<script type="importmap">
+{
+  "imports": {
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.24",
+    "recharts": "https://aistudiocdn.com/recharts@^3.4.1",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
+    "@firebase/app": "https://aistudiocdn.com/@firebase/app@^0.14.6",
+    "@firebase/firestore": "https://aistudiocdn.com/@firebase/firestore@^4.9.2",
+    "@firebase/functions": "https://aistudiocdn.com/@firebase/functions@^0.13.1",
+    "@firebase/storage": "https://aistudiocdn.com/@firebase/storage@^0.14.0",
+    "@firebase/auth": "https://aistudiocdn.com/@firebase/auth@^1.11.1"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-FehDlioG.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-[#0a0e1a] text-gray-900 dark:text-gray-200">
+  <div id="root"></div>
+</body>
+</html>
