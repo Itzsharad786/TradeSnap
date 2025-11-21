@@ -1,0 +1,240 @@
+[
+    {
+        "id": "topic-0",
+        "title": "Market Structure Basics",
+        "description": "Understanding higher highs, higher lows, and trend identification",
+        "category": "SMC",
+        "difficulty": "Beginner"
+    },
+    {
+        "id": "topic-1",
+        "title": "Order Blocks",
+        "description": "Identifying institutional order blocks and their significance",
+        "category": "SMC",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-2",
+        "title": "Fair Value Gaps (FVG)",
+        "description": "Spotting and trading imbalances in price action",
+        "category": "SMC",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-3",
+        "title": "Liquidity Pools",
+        "description": "Finding where smart money hunts for liquidity",
+        "category": "SMC",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-4",
+        "title": "Break of Structure (BOS)",
+        "description": "Recognizing trend continuation signals",
+        "category": "SMC",
+        "difficulty": "Beginner"
+    },
+    {
+        "id": "topic-5",
+        "title": "Change of Character (CHoCH)",
+        "description": "Identifying potential trend reversals",
+        "category": "SMC",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-6",
+        "title": "Premium & Discount Zones",
+        "description": "Understanding optimal entry and exit zones",
+        "category": "SMC",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-7",
+        "title": "Inducement",
+        "description": "How institutions trap retail traders",
+        "category": "SMC",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-8",
+        "title": "Mitigation Blocks",
+        "description": "Price returning to unfilled orders",
+        "category": "SMC",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-9",
+        "title": "Breaker Blocks",
+        "description": "Failed order blocks that reverse",
+        "category": "SMC",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-10",
+        "title": "Support and Resistance",
+        "description": "Key levels where price tends to react",
+        "category": "Price Action",
+        "difficulty": "Beginner"
+    },
+    {
+        "id": "topic-11",
+        "title": "Candlestick Patterns",
+        "description": "Reading price action through candle formations",
+        "category": "Price Action",
+        "difficulty": "Beginner"
+    },
+    {
+        "id": "topic-12",
+        "title": "Trend Lines & Channels",
+        "description": "Drawing and trading dynamic support/resistance",
+        "category": "Price Action",
+        "difficulty": "Beginner"
+    },
+    {
+        "id": "topic-13",
+        "title": "Chart Patterns",
+        "description": "Head & shoulders, triangles, flags, and more",
+        "category": "Price Action",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-14",
+        "title": "Volume Analysis",
+        "description": "Using volume to confirm price movements",
+        "category": "Price Action",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-15",
+        "title": "Price Action Confluence",
+        "description": "Combining multiple signals for high-probability setups",
+        "category": "Price Action",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-16",
+        "title": "Fibonacci Retracements",
+        "description": "Finding potential reversal levels",
+        "category": "Price Action",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-17",
+        "title": "Fibonacci Extensions",
+        "description": "Projecting profit targets",
+        "category": "Price Action",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-18",
+        "title": "Multiple Timeframe Analysis",
+        "description": "Aligning trades across different timeframes",
+        "category": "Price Action",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-19",
+        "title": "Price Action Rejection",
+        "description": "Identifying strong rejection wicks and pins",
+        "category": "Price Action",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-20",
+        "title": "Trading Psychology Basics",
+        "description": "Understanding emotions in trading",
+        "category": "Psychology",
+        "difficulty": "Beginner"
+    },
+    {
+        "id": "topic-21",
+        "title": "Risk Management",
+        "description": "Protecting your capital with proper position sizing",
+        "category": "Psychology",
+        "difficulty": "Beginner"
+    },
+    {
+        "id": "topic-22",
+        "title": "Overcoming FOMO",
+        "description": "Fear of missing out and how to control it",
+        "category": "Psychology",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-23",
+        "title": "Dealing with Losses",
+        "description": "How to handle losing trades mentally",
+        "category": "Psychology",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-24",
+        "title": "Trading Discipline",
+        "description": "Sticking to your trading plan",
+        "category": "Psychology",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-25",
+        "title": "Revenge Trading",
+        "description": "Avoiding emotional trading after losses",
+        "category": "Psychology",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-26",
+        "title": "Building Confidence",
+        "description": "Developing trust in your trading system",
+        "category": "Psychology",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-27",
+        "title": "Journaling Your Trades",
+        "description": "Tracking and improving your performance",
+        "category": "Psychology",
+        "difficulty": "Beginner"
+    },
+    {
+        "id": "topic-28",
+        "title": "Patience in Trading",
+        "description": "Waiting for the right setups",
+        "category": "Psychology",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-29",
+        "title": "Mindset of Successful Traders",
+        "description": "Thinking like a professional trader",
+        "category": "Psychology",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-30",
+        "title": "Money Management Strategies",
+        "description": "Advanced capital allocation techniques",
+        "category": "Psychology",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-31",
+        "title": "Market Manipulation",
+        "description": "Understanding how big players move markets",
+        "category": "SMC",
+        "difficulty": "Advanced"
+    },
+    {
+        "id": "topic-32",
+        "title": "Session Trading",
+        "description": "Trading different market sessions effectively",
+        "category": "Price Action",
+        "difficulty": "Intermediate"
+    },
+    {
+        "id": "topic-33",
+        "title": "News Trading",
+        "description": "How to trade around economic events",
+        "category": "Price Action",
+        "difficulty": "Advanced"
+    }
+]

@@ -1,0 +1,7 @@
+{
+  "name": "Tradesnap",
+  "description": "An AI-powered trading simulator and learning platform. Practice trading, get AI analysis from DeepSeek & Mistral, and learn with AI-generated explanations, all in a sleek, animated dark-mode interface.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
