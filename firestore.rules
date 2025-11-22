@@ -7,19 +7,20 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      allow read: if !resource.data.isPrivate || request.auth.uid == resource.data.ownerUid;
       allow create: if request.auth != null;
-      // Allow owner to update/delete.
-      // Allow users to join (update members) if public.
-      allow update: if request.auth.uid == resource.data.ownerUid 
-                   || (!resource.data.isPrivate && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']));
-      allow delete: if request.auth.uid == resource.data.ownerUid;
+      // Public read allowed; private groups only readable by owner or members
+      allow read: if !resource.data.isPrivate || request.auth.uid == resource.data.ownerUid || (request.auth != null && request.auth.uid in resource.data.membersUidList);
+      allow update, delete: if request.auth.uid == resource.data.ownerUid;
     }
 
-    match /groups/{groupId}/messages/{msgId} {
-      allow read: if true;
+    match /groups/{groupId}/messages/{messageId} {
+      // Messages readable publicly inside group read rules above; creation requires auth
+      allow read: if exists(/databases/$(database)/documents/groups/$(groupId)) ? (
+          let g = get(/databases/$(database)/documents/groups/$(groupId)).data;
+          (!g.isPrivate) || (request.auth != null && (request.auth.uid == g.ownerUid || request.auth.uid in g.membersUidList))
+      ) : false;
       allow create: if request.auth != null;
-      allow delete: if false; // no deleting messages
+      allow delete: if false; // only owner can delete groups, messages should not be deletable by regular users
     }
   }
 }
