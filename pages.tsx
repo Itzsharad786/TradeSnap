@@ -246,9 +246,11 @@ export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: Us
     const [viewGroup, setViewGroup] = useState<Group | null>(null);
     const [chatMsg, setChatMsg] = useState('');
     const [messages, setMessages] = useState<GroupChatMessage[]>([]);
-    const currentUserId = userProfile?.uid || 'guest';
 
-    // Load ALL groups on mount (not just user-specific groups)
+    // Ensure we have a valid user ID, even for guests
+    const currentUserId = userProfile?.uid;
+
+    // Load ALL groups on mount
     useEffect(() => {
         const unsubscribe = FirestoreService.getAllGroups((loadedGroups) => {
             setGroups(loadedGroups);
@@ -275,6 +277,7 @@ export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: Us
     }, [viewGroup?.id]);
 
     const handleCreateGroup = async (groupData: any) => {
+        if (!currentUserId) return;
         try {
             const inviteCode = Math.random().toString(36).substr(2, 6).toUpperCase();
             const newGroupData: Omit<Group, 'id' | 'createdAt'> = {
@@ -289,8 +292,7 @@ export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: Us
                 members: [currentUserId],
                 inviteCode: inviteCode
             };
-            const groupId = await FirestoreService.createGroup(newGroupData);
-            console.log('Group created:', groupId);
+            await FirestoreService.createGroup(newGroupData);
             setShowCreate(false);
         } catch (error) {
             console.error('Error creating group:', error);
@@ -299,11 +301,11 @@ export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: Us
     };
 
     const handleSendMessage = async () => {
-        if (!chatMsg.trim() || !viewGroup) return;
+        if (!chatMsg.trim() || !viewGroup || !currentUserId) return;
 
         try {
             const messageData: Omit<GroupChatMessage, 'id' | 'timestamp' | 'reactions'> = {
-                authorName: userProfile?.name || 'User',
+                authorName: userProfile?.name || 'Guest',
                 authorAvatar: userProfile?.avatar || 'trader-1',
                 text: chatMsg,
                 type: 'text'
@@ -313,12 +315,6 @@ export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: Us
         } catch (error) {
             console.error('Error sending message:', error);
         }
-    };
-
-    const handleJoinByCode = async (code: string) => {
-        // Join group by invite code logic
-        // This would query Firestore for group with matching inviteCode
-        console.log('Joining group with code:', code);
     };
 
     return (
@@ -432,12 +428,9 @@ export const TraderLabPage: React.FC = () => {
             setImageLoading(true);
             setGeneratedImage('');
 
-            // Simulate AI image generation with a relevant trading chart image
-            // In production, you would call an AI image generation API here
-            const imagePrompt = `${activeTopic.category} trading chart showing ${activeTopic.title}`;
+            // Simulate AI image generation
             const fallbackImage = `https://placehold.co/800x400/111827/0ea5e9?text=${encodeURIComponent(activeTopic.title)}+Chart&font=roboto`;
 
-            // Simulate API delay
             setTimeout(() => {
                 setGeneratedImage(fallbackImage);
                 setImageLoading(false);
@@ -454,12 +447,6 @@ export const TraderLabPage: React.FC = () => {
         setExplanation(result);
         setLoading(false);
     };
-
-    // Debug: Log topics on component mount
-    useEffect(() => {
-        console.log('TraderLab - Topics loaded:', TOPICS);
-        console.log('TraderLab - Topics count:', TOPICS?.length);
-    }, []);
 
     return (
         <PageWrapper>
