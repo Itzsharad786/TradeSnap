@@ -60,21 +60,54 @@ export const createOrUpdateUserProfile = async (profileData: UserProfile): Promi
 
 // --- Group Functions ---
 
-export const createGroup = async (groupData: any): Promise<string> => {
+// Simple client-side hash for password (in a real app, use a server function)
+const hashPassword = async (password: string): Promise<string> => {
+    const msgBuffer = new TextEncoder().encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+export const createGroup = async (groupData: {
+    name: string;
+    description: string;
+    ownerUid: string;
+    ownerEmail: string;
+    isPrivate: boolean;
+    password?: string;
+    avatarUrl?: string;
+}): Promise<string> => {
     try {
         const collectionRef = collection(db, "groups");
+
+        let passwordHash = null;
+        if (groupData.isPrivate && groupData.password) {
+            passwordHash = await hashPassword(groupData.password);
+        }
+
+        const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        const initialMember = {
+            uid: groupData.ownerUid,
+            email: groupData.ownerEmail,
+            joinedAt: new Date().toISOString(), // Store as string for easier UI handling, or use serverTimestamp if preferred for sorting
+            role: 'owner'
+        };
+
         const safeData = {
             name: groupData.name || "Unnamed Group",
             description: groupData.description || "",
             avatarUrl: groupData.avatarUrl || null,
             isPrivate: groupData.isPrivate ?? false,
-            password: groupData.password || null,
+            password: passwordHash, // Store hash
             ownerUid: groupData.ownerUid,
             ownerEmail: groupData.ownerEmail,
-            members: groupData.members || [], // Array of objects { uid, email, joinedAt }
-            inviteCode: groupData.inviteCode || Math.random().toString(36).substring(2, 8).toUpperCase(),
+            members: [initialMember],
+            membersUidList: [groupData.ownerUid], // For efficient querying and security rules
+            inviteCode: inviteCode,
             createdAt: serverTimestamp(),
         };
+
         const sanitized = sanitizeData(safeData);
         const docRef = await addDoc(collectionRef, sanitized);
         return docRef.id;
@@ -93,28 +126,59 @@ export const deleteGroup = async (groupId: string) => {
     await deleteDoc(doc(db, "groups", groupId));
 };
 
-export const joinGroup = async (groupId: string, user: { uid: string, email: string }) => {
+export const joinGroup = async (groupId: string, user: { uid: string, email: string }, password?: string): Promise<boolean> => {
     const docRef = doc(db, "groups", groupId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) throw new Error("Group not found");
+
+    const groupData = docSnap.data();
+
+    if (groupData.isPrivate) {
+        if (!password) throw new Error("Password required");
+        const inputHash = await hashPassword(password);
+        if (inputHash !== groupData.password) {
+            throw new Error("Incorrect password");
+        }
+    }
+
+    // Check if already member
+    if (groupData.membersUidList?.includes(user.uid)) {
+        return true; // Already joined
+    }
+
     const memberData = {
         uid: user.uid,
         email: user.email,
-        joinedAt: new Date().toISOString() // Store as string for easier array handling or timestamp
+        joinedAt: new Date().toISOString(),
+        role: 'member'
     };
-    // Note: This requires 'members' to be an array of maps. 
-    // arrayUnion works with exact object matches.
+
     await updateDoc(docRef, {
-        members: arrayUnion(memberData)
+        members: arrayUnion(memberData),
+        membersUidList: arrayUnion(user.uid)
     });
+
+    return true;
 };
 
-export const leaveGroup = async (groupId: string, memberData: any) => {
+export const leaveGroup = async (groupId: string, user: { uid: string, email: string }) => {
     const docRef = doc(db, "groups", groupId);
-    await updateDoc(docRef, {
-        members: arrayRemove(memberData)
-    });
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return;
+
+    const groupData = docSnap.data();
+    const memberToRemove = groupData.members.find((m: any) => m.uid === user.uid);
+
+    if (memberToRemove) {
+        await updateDoc(docRef, {
+            members: arrayRemove(memberToRemove),
+            membersUidList: arrayRemove(user.uid)
+        });
+    }
 };
 
-// Fetch Public Groups
+// Fetch Public Groups (isPrivate == false)
 export const getPublicGroups = (callback: (groups: Group[]) => void): Unsubscribe => {
     const q = query(collection(db, "groups"), where("isPrivate", "==", false), orderBy("createdAt", "desc"));
     return onSnapshot(q, (snapshot) => {
@@ -123,18 +187,26 @@ export const getPublicGroups = (callback: (groups: Group[]) => void): Unsubscrib
     });
 };
 
-// Fetch My Groups (Owned or Member)
-// Firestore array-contains with objects is tricky. 
-// We usually store a separate "memberUids" array for querying, but the user schema didn't specify it.
-// We will try to filter client side if needed, or assume the user adds a 'memberUids' field for indexing.
-// For now, we'll fetch "Owned" groups.
-export const getUserOwnedGroups = (userId: string, callback: (groups: Group[]) => void): Unsubscribe => {
-    const q = query(collection(db, "groups"), where("ownerUid", "==", userId), orderBy("createdAt", "desc"));
+// Fetch Groups Owned by User
+export const getGroupsForOwner = (ownerUid: string, callback: (groups: Group[]) => void): Unsubscribe => {
+    const q = query(collection(db, "groups"), where("ownerUid", "==", ownerUid), orderBy("createdAt", "desc"));
     return onSnapshot(q, (snapshot) => {
         const groups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
         callback(groups);
     });
 };
+
+// Fetch Groups User is a Member of (including owned)
+export const getGroupsForUser = (userUid: string, callback: (groups: Group[]) => void): Unsubscribe => {
+    const q = query(collection(db, "groups"), where("membersUidList", "array-contains", userUid), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snapshot) => {
+        const groups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
+        callback(groups);
+    });
+};
+
+// Helper alias for backward compatibility if needed, or just use getGroupsForUser
+export const getUserJoinedGroups = getGroupsForUser;
 
 // Messages
 export const getGroupMessages = (groupId: string, callback: (messages: GroupChatMessage[]) => void): Unsubscribe => {
@@ -159,15 +231,33 @@ export const sendMessageToGroup = async (groupId: string, message: any) => {
 };
 
 export const joinGroupByInviteCode = async (inviteCode: string, user: { uid: string, email: string }): Promise<string | null> => {
-    // Try to find group by invite code
-    // This query fails for private groups if user is not owner (due to rules)
     const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode), limit(1));
     const snapshot = await getDocs(q);
     if (snapshot.empty) return null;
 
     const groupDoc = snapshot.docs[0];
     const groupId = groupDoc.id;
+    const groupData = groupDoc.data();
 
-    await joinGroup(groupId, user);
+    // If private, we can't bypass password unless invite code implies bypass? 
+    // Usually invite code implies bypass. Let's assume invite code allows join without password.
+    // But if the user specifically wants password for private groups even with invite code, we'd need to check.
+    // For now, let's allow join.
+
+    // Check if already member
+    if (groupData.membersUidList?.includes(user.uid)) return groupId;
+
+    const memberData = {
+        uid: user.uid,
+        email: user.email,
+        joinedAt: new Date().toISOString(),
+        role: 'member'
+    };
+
+    await updateDoc(doc(db, "groups", groupId), {
+        members: arrayUnion(memberData),
+        membersUidList: arrayUnion(user.uid)
+    });
+
     return groupId;
 };
