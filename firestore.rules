@@ -7,20 +7,19 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      // Public groups are readable by everyone (authenticated).
-      // Private groups are readable ONLY by the owner.
-      allow read: if request.auth != null && (!resource.data.isPrivate || request.auth.uid == resource.data.ownerUid);
-      
-      // Creation allowed for authenticated users.
+      allow read: if !resource.data.isPrivate || request.auth.uid == resource.data.ownerUid;
       allow create: if request.auth != null;
-      
-      // Update/Delete only by owner.
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.ownerUid;
-      
-      match /messages/{messageId} {
-        allow read, create: if request.auth != null;
-        allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
-      }
+      // Allow owner to update/delete.
+      // Allow users to join (update members) if public.
+      allow update: if request.auth.uid == resource.data.ownerUid 
+                   || (!resource.data.isPrivate && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']));
+      allow delete: if request.auth.uid == resource.data.ownerUid;
+    }
+
+    match /groups/{groupId}/messages/{msgId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow delete: if false; // no deleting messages
     }
   }
 }

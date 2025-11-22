@@ -6,28 +6,27 @@ export type Page = 'Home' | 'Market' | 'News' | 'Analyzer' | 'TraderLab' | 'Comm
 export interface UserProfile {
   uid: string;
   name: string;
-  displayName?: string; // Display name (can be different from username)
+  displayName?: string;
   username: string;
   email: string | null;
-  avatar: string; // base64 or preset key
+  avatar: string;
   bio: string;
-  country: string; // Country code or name
+  country: string;
   experience: 'Beginner' | 'Intermediate' | 'Expert';
   isGuest?: boolean;
   createdAt?: Date;
-  lastLogin?: Date; // Track last login time
+  lastLogin?: Date;
   onboardingCompleted: boolean;
   theme: Theme;
-  themeColor?: string; // Hex code for accent color
-  groupsJoined?: string[]; // Array of group IDs the user has joined
-  traderLabProgress?: { // Track progress through TraderLab topics
+  themeColor?: string;
+  groupsJoined?: string[];
+  traderLabProgress?: {
     [topicId: string]: {
       completed: boolean;
       lastViewed?: Date;
       aiExplanationGenerated?: boolean;
     };
   };
-  // Stats
   stats: {
     analysesRun: number;
     chartsUploaded: number;
@@ -35,7 +34,7 @@ export interface UserProfile {
     xp: number;
     rank: 'Bronze' | 'Silver' | 'Gold' | 'Heroic';
     badges: string[];
-    balance: number; // Paper trading balance
+    balance: number;
     pnl: number;
   };
 }
@@ -75,6 +74,7 @@ export interface GroupChatMessage {
   id: string;
   authorName: string;
   authorAvatar: string;
+  authorId?: string; // Added for ownership check
   text: string;
   timestamp: number;
   reactions: { [key: string]: any };
@@ -82,24 +82,27 @@ export interface GroupChatMessage {
   mediaUrl?: string;
 }
 
+export interface GroupMember {
+  uid: string;
+  email: string;
+  joinedAt: string;
+}
+
 export interface Group {
   id: string;
   name: string;
   description: string;
-  avatar: string;
-  type: 'Public' | 'Private';
-  isPrivate?: boolean;
-  password?: string; // In a real app, this would be hashed
-  topic?: string;
-  createdBy: string;
-  members: string[];
+  avatarUrl: string | null; // Updated
+  isPrivate: boolean;
+  password?: string | null;
+  ownerUid: string;
+  ownerEmail: string;
+  inviteCode: string;
+  members: GroupMember[]; // Updated
   createdAt: any;
-  inviteCode?: string;
+  type?: string; // Legacy support
+  topic?: string; // Legacy support
   bannerUrl?: string;
-}
-
-export interface NewsCategory {
-  // ... existing
 }
 
 export interface NewsArticleWithImage {
@@ -112,14 +115,6 @@ export interface NewsArticleWithImage {
   category: string;
 }
 
-export interface RssArticle {
-  title: string;
-  link: string;
-  pubDate: string;
-  contentSnippet: string;
-  isoDate?: string;
-}
-
 export interface TraderLabTopic {
   id: string;
   title: string;
@@ -129,13 +124,11 @@ export interface TraderLabTopic {
   imageUrl?: string;
 }
 
-
-// Paper Trading Position
 export interface Position {
   id: string;
   symbol: string;
   entryPrice: number;
-  quantity: number; // Lots
+  quantity: number;
   type: 'BUY' | 'SELL';
   status: 'OPEN' | 'CLOSED';
   pnl?: number;
