@@ -247,16 +247,38 @@ export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: Us
     const [chatMsg, setChatMsg] = useState('');
     const [messages, setMessages] = useState<GroupChatMessage[]>([]);
 
-    // Ensure we have a valid user ID, even for guests
     const currentUserId = userProfile?.uid;
 
-    // Load ALL groups on mount
+    // Load Groups (Public + Owned Private)
     useEffect(() => {
-        const unsubscribe = FirestoreService.getAllGroups((loadedGroups) => {
-            setGroups(loadedGroups);
+        // 1. Load Public Groups
+        const unsubscribePublic = FirestoreService.getPublicGroups((publicGroups) => {
+            setGroups(prev => {
+                // Merge with existing private groups (if any) to avoid flickering
+                const privateGroups = prev.filter(g => g.isPrivate);
+                // Deduplicate by ID just in case
+                const merged = [...publicGroups, ...privateGroups].filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i);
+                return merged.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+            });
         });
-        return () => unsubscribe();
-    }, []);
+
+        // 2. Load Private Groups (Only if logged in)
+        let unsubscribePrivate: (() => void) | undefined;
+        if (currentUserId) {
+            unsubscribePrivate = FirestoreService.getUserPrivateGroups(currentUserId, (privateGroups) => {
+                setGroups(prev => {
+                    const publicGroups = prev.filter(g => !g.isPrivate);
+                    const merged = [...publicGroups, ...privateGroups].filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i);
+                    return merged.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+                });
+            });
+        }
+
+        return () => {
+            unsubscribePublic();
+            if (unsubscribePrivate) unsubscribePrivate();
+        };
+    }, [currentUserId]);
 
     // Auto-open group if initialGroupId is provided
     useEffect(() => {
@@ -289,6 +311,8 @@ export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: Us
                 password: groupData.password,
                 topic: groupData.topic,
                 createdBy: currentUserId,
+                ownerUid: currentUserId,
+                ownerEmail: userProfile?.email || 'guest',
                 members: [currentUserId],
                 inviteCode: inviteCode
             };
@@ -330,28 +354,36 @@ export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: Us
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {groups.length === 0 && <div className="col-span-3 text-center text-gray-500 py-10">No groups yet. Create one!</div>}
+                        {groups.length === 0 && <div className="col-span-3 text-center text-gray-500 py-10">No groups found. Create one!</div>}
                         {groups.map(g => (
                             <Card key={g.id} onClick={() => setViewGroup(g)} className="hover:border-sky-500 cursor-pointer relative">
                                 <div className="flex items-center justify-between mb-2">
                                     <h3 className="font-bold text-lg">{g.name}</h3>
-                                    {g.isPrivate && <Icon name="lock" className="h-4 w-4 text-gray-400" />}
+                                    {g.isPrivate && <Icon name="lock" className="h-4 w-4 text-amber-500" />}
                                 </div>
                                 <p className="text-sm text-gray-500">{g.description}</p>
                                 <div className="mt-4 flex items-center gap-2">
-                                    <div className="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-1 px-2 rounded inline-block">
-                                        Invite: {g.inviteCode}
-                                    </div>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigator.clipboard.writeText(`https://tradesnapai.web.app/join/${g.inviteCode}`);
-                                            alert('Invite link copied!');
-                                        }}
-                                        className="text-xs text-sky-500 hover:underline"
-                                    >
-                                        Copy Link
-                                    </button>
+                                    {g.isPrivate ? (
+                                        <div className="text-xs font-mono bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 p-1 px-2 rounded inline-block">
+                                            Private Group
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="text-xs font-mono bg-gray-100 dark:bg-gray-800 p-1 px-2 rounded inline-block">
+                                                Invite: {g.inviteCode}
+                                            </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigator.clipboard.writeText(`https://tradesnapai.web.app/join/${g.inviteCode}`);
+                                                    alert('Invite link copied!');
+                                                }}
+                                                className="text-xs text-sky-500 hover:underline"
+                                            >
+                                                Copy Link
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </Card>
                         ))}
@@ -361,16 +393,21 @@ export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: Us
                 <div className="h-[80vh] flex flex-col">
                     <div className="mb-4 flex items-center justify-between">
                         <button onClick={() => setViewGroup(null)} className="text-sm text-gray-500 hover:text-sky-500">← Back</button>
-                        <h2 className="font-bold text-xl">{viewGroup.name}</h2>
-                        <button
-                            className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded flex items-center gap-1"
-                            onClick={() => {
-                                navigator.clipboard.writeText(`https://tradesnapai.web.app/join/${viewGroup.inviteCode}`);
-                                alert('Invite link copied to clipboard!');
-                            }}
-                        >
-                            <Icon name="copy" className="h-3 w-3" /> Invite
-                        </button>
+                        <h2 className="font-bold text-xl flex items-center gap-2">
+                            {viewGroup.name}
+                            {viewGroup.isPrivate && <Icon name="lock" className="h-4 w-4 text-amber-500" />}
+                        </h2>
+                        {!viewGroup.isPrivate && (
+                            <button
+                                className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded flex items-center gap-1"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(`https://tradesnapai.web.app/join/${viewGroup.inviteCode}`);
+                                    alert('Invite link copied to clipboard!');
+                                }}
+                            >
+                                <Icon name="copy" className="h-3 w-3" /> Invite
+                            </button>
+                        )}
                     </div>
                     <div className="flex-grow bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 overflow-y-auto">
                         {messages.length === 0 && (

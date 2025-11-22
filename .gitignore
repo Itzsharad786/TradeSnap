@@ -3,12 +3,11 @@ logs
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-# dist
+dist
 dist-ssr
 *.local
 
@@ -44,3 +43,4 @@ deploy_fresh.js
 fix_deploy_final.js
 fix_key.js
 setup_git_deploy.js
+fix_deploy.ps1
