@@ -134,6 +134,27 @@ export const getGroupsForUser = (userId: string, callback: (groups: Group[]) => 
     });
 };
 
+export const getAllGroups = (callback: (groups: Group[]) => void): Unsubscribe => {
+    const q = query(collection(db, "groups"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (querySnapshot) => {
+        const groups: Group[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            groups.push({
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date()
+            } as Group);
+        });
+        callback(groups);
+    }, (error) => {
+        console.error("Firestore Error in getAllGroups:", error);
+        if (error.code === 'failed-precondition' || error.message.includes('index')) {
+            console.error("MISSING INDEX! Create it here:", error.message);
+        }
+    });
+};
+
 export const getGroupMessages = (groupId: string, callback: (messages: GroupChatMessage[]) => void): Unsubscribe => {
     const messagesRef = collection(db, "groups", groupId, "messages");
     const q = query(messagesRef, orderBy("timestamp", "asc"), limit(50));

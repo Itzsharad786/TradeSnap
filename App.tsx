@@ -274,7 +274,7 @@ export default function App() {
                         {page === 'News' && <NewsPage />}
                         {page === 'Analyzer' && <AnalyzerPage />}
                         {page === 'TraderLab' && <TraderLabPage />}
-                        {page === 'Community' && <CommunityPage initialGroupId={targetGroupId} />}
+                        {page === 'Community' && <CommunityPage initialGroupId={targetGroupId} userProfile={userProfile} />}
                         {page === 'Profile' && (
                             <ProfilePage
                                 profile={userProfile}

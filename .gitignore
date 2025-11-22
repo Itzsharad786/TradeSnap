@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist
 dist-ssr
 *.local
 
@@ -17,6 +17,7 @@ dist-ssr
 .env.local
 .env.production
 .env.development
+.env.deploy
 
 # Firebase
 .firebase/
@@ -34,3 +35,12 @@ ui-debug.log
 *.njsproj
 *.sln
 *.sw?
+
+# Local Netlify folder
+.netlify
+
+# Deployment scripts with secrets
+deploy_fresh.js
+fix_deploy_final.js
+fix_key.js
+setup_git_deploy.js

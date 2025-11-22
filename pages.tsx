@@ -240,21 +240,21 @@ export const MarketPage: React.FC = () => {
 };
 
 // --- COMMUNITY PAGE (Firestore Integration) ---
-export const CommunityPage: React.FC<{ initialGroupId?: string }> = ({ initialGroupId }) => {
+export const CommunityPage: React.FC<{ initialGroupId?: string, userProfile?: UserProfile }> = ({ initialGroupId, userProfile }) => {
     const [showCreate, setShowCreate] = useState(false);
     const [groups, setGroups] = useState<Group[]>([]);
     const [viewGroup, setViewGroup] = useState<Group | null>(null);
     const [chatMsg, setChatMsg] = useState('');
     const [messages, setMessages] = useState<GroupChatMessage[]>([]);
-    const [currentUserId] = useState('me'); // Replace with actual user ID from auth
+    const currentUserId = userProfile?.uid || 'guest';
 
-    // Load groups on mount
+    // Load ALL groups on mount (not just user-specific groups)
     useEffect(() => {
-        const unsubscribe = FirestoreService.getGroupsForUser(currentUserId, (loadedGroups) => {
+        const unsubscribe = FirestoreService.getAllGroups((loadedGroups) => {
             setGroups(loadedGroups);
         });
         return () => unsubscribe();
-    }, [currentUserId]);
+    }, []);
 
     // Auto-open group if initialGroupId is provided
     useEffect(() => {
@@ -303,8 +303,8 @@ export const CommunityPage: React.FC<{ initialGroupId?: string }> = ({ initialGr
 
         try {
             const messageData: Omit<GroupChatMessage, 'id' | 'timestamp' | 'reactions'> = {
-                authorName: 'User', // Replace with actual user name
-                authorAvatar: 'trader-1',
+                authorName: userProfile?.name || 'User',
+                authorAvatar: userProfile?.avatar || 'trader-1',
                 text: chatMsg,
                 type: 'text'
             };
