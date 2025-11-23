@@ -1,26 +1,12 @@
 
-import { GoogleGenAI } from "@google/genai";
+// AI Service - Placeholder Implementation
+// Note: Direct AI SDK usage removed to prevent browser API key exposure
+// TODO: Move to Netlify Functions for production AI features
+
 import type { ChatMessage } from '../types';
 
-// Get API key from environment - works in both dev and production
-const apiKey = (process.env.GEMINI_API_KEY || process.env.API_KEY) as string;
-const ai = new GoogleGenAI({ apiKey });
-
-const TEXT_MODEL = 'gemini-2.5-flash';
-const VISION_MODEL = 'gemini-2.5-flash';
-
-const CLEAN_FORMAT_INSTRUCTION = `
-IMPORTANT:
-- Output PLAIN TEXT only.
-- NO Markdown characters (no *, no #, no bold).
-- Max 6 lines total.
-- STRICT FORMAT:
-Trend: 🟩/🟥 [UP/DOWN/SIDEWAYS]
-Key Levels: [Support] / [Resistance]
-Buy Zone: [Range] 🎯
-Sell Zone: [Range] 📉
-Risk Note: ⚠️ [Short caution]
-`;
+// Placeholder responses for development/fallback
+const PLACEHOLDER_RESPONSE = "AI features temporarily disabled in production.\nPlease check back later for full AI analysis.";
 
 // --- Chatbot ---
 let systemInstruction = "";
@@ -41,62 +27,24 @@ export const startChat = () => {
 export const getInitialBotMessage = () => initialBotMessage;
 
 export const sendMessageToBot = async (history: ChatMessage[]): Promise<string> => {
-    const contents = history.map(msg => ({ role: msg.role, parts: [{ text: msg.text }] }));
-    try {
-        const response = await ai.models.generateContent({
-            model: TEXT_MODEL,
-            contents: contents,
-            config: { systemInstruction: systemInstruction }
-        });
-        return response.text.replace(/\*/g, ''); // Strip stars just in case
-    } catch (error) {
-        return "Connection error.";
-    }
+    // Placeholder - AI SDK removed to prevent browser API key requirement
+    return PLACEHOLDER_RESPONSE;
 };
 
 // --- Analyzer ---
 export const analyzeStock = async (symbol: string): Promise<string> => {
-    const prompt = `Analyze Stock/Forex/Crypto: ${symbol}.
-    ${CLEAN_FORMAT_INSTRUCTION}
-    Language: English.`;
-
-    try {
-        const response = await ai.models.generateContent({ model: TEXT_MODEL, contents: prompt });
-        return response.text.replace(/\*/g, '');
-    } catch (error) {
-        return "Analysis failed.";
-    }
+    // Placeholder - AI SDK removed to prevent browser API key requirement
+    return `Analysis for ${symbol}:\n\n${PLACEHOLDER_RESPONSE}`;
 };
 
 export const analyzeChart = async (imageBase64: string, mimeType: string, timeframe: string): Promise<string> => {
-    const prompt = `Analyze this chart. Timeframe: ${timeframe}.
-    ${CLEAN_FORMAT_INSTRUCTION}
-    Language: English.`;
-
-    try {
-        const imagePart = { inlineData: { data: imageBase64, mimeType: mimeType } };
-        const response = await ai.models.generateContent({
-            model: VISION_MODEL,
-            contents: { parts: [imagePart, { text: prompt }] },
-        });
-        return response.text.replace(/\*/g, '');
-    } catch (error) {
-        return "Chart analysis error.";
-    }
+    // Placeholder - AI SDK removed to prevent browser API key requirement
+    return `Chart Analysis (${timeframe}):\n\n${PLACEHOLDER_RESPONSE}`;
 };
 
 // --- TraderLab ---
 export const explainConcept = async (concept: string): Promise<string> => {
-    const prompt = `Explain trading concept: "${concept}".
-    ${CLEAN_FORMAT_INSTRUCTION}
-    But adapt the fields slightly to explain the concept clearly.
-    Keep the Risk Note.
-    Language: English.`;
-
-    try {
-        const response = await ai.models.generateContent({ model: TEXT_MODEL, contents: prompt });
-        return response.text.replace(/\*/g, '');
-    } catch (error) {
-        return "Concept data unavailable.";
-    }
+    // Placeholder - AI SDK removed to prevent browser API key requirement
+    return `Concept: ${concept}\n\n${PLACEHOLDER_RESPONSE}`;
 };
+
