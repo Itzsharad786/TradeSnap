@@ -1,16 +1,3 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { AreaChart, Area, ResponsiveContainer, YAxis } from 'recharts';
-import { useMarketData } from './hooks';
-import * as AiService from './services/geminiService';
-import { fetchNews } from './services/newsService';
-import { Icon, Card, Button, Loader, Modal, NewsCard, Avatar, Tabs, CreateGroupModal, ThemePicker } from './components';
-import HyperspeedBG from './components/HyperspeedBG';
-import type { UserProfile, Page, TraderLabTopic, NewsArticleWithImage, Group, GroupChatMessage } from './types';
-import { PROFILE_AVATARS } from './types';
-import * as FirestoreService from './services/firestoreService';
-import TOPICS_DATA from './topics.json';
-import { storage } from './firebase';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // --- STORAGE HELPER (Inlined for portability) ---
@@ -520,6 +507,7 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
     const [displayProfile, setDisplayProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
     // Determine which UID to show
     const targetUid = viewUid || (profile ? profile.uid : null);
@@ -611,7 +599,10 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
                                 <Avatar avatar={displayProfile.avatar} className="h-32 w-32 rounded-full border-4 border-[#0a0e1a]" />
                             </motion.div>
                             {isOwnProfile && (
-                                <button className="absolute bottom-2 right-2 p-2 bg-sky-500 hover:bg-sky-400 text-white rounded-full shadow-lg transition-all hover:scale-110">
+                                <button
+                                    onClick={() => setShowAvatarPicker(true)}
+                                    className="absolute bottom-2 right-2 p-2 bg-sky-500 hover:bg-sky-400 text-white rounded-full shadow-lg transition-all hover:scale-110"
+                                >
                                     <Icon name="upload" className="h-4 w-4" />
                                 </button>
                             )}
@@ -705,6 +696,21 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
                     )}
                 </div>
             </motion.div>
+
+            {/* Avatar & Theme Picker Modal */}
+            {showAvatarPicker && displayProfile && (
+                <ProfileAvatarPicker
+                    userProfile={displayProfile}
+                    onAvatarChange={async (avatarUrl) => {
+                        const updated = { ...displayProfile, avatar: avatarUrl };
+                        setDisplayProfile(updated);
+                        onProfileUpdate(updated);
+                        await FirestoreService.createOrUpdateUserProfile(updated);
+                    }}
+                    onThemeColorChange={handleThemeChange}
+                    onClose={() => setShowAvatarPicker(false)}
+                />
+            )}
         </PageWrapper>
     );
 };
