@@ -57,35 +57,41 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
     return (
         <motion.nav
             initial={{ y: -100 }} animate={{ y: 0 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#0a0e1a]/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 shadow-sm transition-colors"
-            style={{ borderBottomColor: themeColor ? `${themeColor}20` : undefined }}
+            className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#0a0e1a]/95 backdrop-blur-xl shadow-sm transition-colors"
+            style={{
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                ...(themeColor ? { borderBottomColor: `${themeColor}20` } : {})
+            }}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                    <div className="flex items-center cursor-pointer gap-3" onClick={() => setPage('Home')}>
-                        <img src={BullLogo} alt="Tradesnap Logo" className="w-[52px] h-auto object-contain" />
-                        <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Tradesnap</span>
+                    {/* Logo Section */}
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => setPage('Home')}>
+                        <img src={BullLogo} className="w-[58px] h-auto object-contain" alt="Tradesnap logo" />
+                        <span className="text-[22px] font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Tradesnap</span>
                     </div>
 
+                    {/* Desktop Nav */}
                     <div className="hidden lg:flex items-center space-x-1">
                         {navItems.map(item => (
                             <button
                                 key={item.name}
                                 onClick={() => setPage(item.name)}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${page === item.name ? 'bg-gray-100 dark:bg-gray-800 text-sky-600 dark:text-cyan-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900'}`}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 group ${page === item.name ? 'bg-gray-100 dark:bg-gray-800 text-sky-600 dark:text-cyan-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-900'}`}
                                 style={page === item.name && themeColor ? { color: themeColor, backgroundColor: `${themeColor}10` } : undefined}
                             >
-                                <Icon name={item.icon} className="h-4 w-4" />
+                                <Icon name={item.icon} className={`h-4 w-4 transition-all duration-150 ${page === item.name ? '' : 'group-hover:text-sky-500 dark:group-hover:text-cyan-400'}`} />
                                 {item.label}
                             </button>
                         ))}
                         <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-3" />
 
                         <button onClick={() => setPage('Profile')} className="ml-3 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                            <Icon name="profile" className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+                            <Icon name="profile" className="h-6 w-6 text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-cyan-400 transition-colors" />
                         </button>
                     </div>
 
+                    {/* Mobile Menu Button */}
                     <div className="lg:hidden flex items-center gap-4">
                         <button onClick={() => setIsOpen(!isOpen)} className="text-gray-600 dark:text-gray-300">
                             <Icon name={isOpen ? "close" : "menu"} />
@@ -94,6 +100,7 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
                 </div>
             </div>
 
+            {/* Mobile Menu */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
