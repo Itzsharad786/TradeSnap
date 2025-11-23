@@ -32,7 +32,9 @@ export const Icon = ({ name, className }: { name: string, className?: string }) 
         arrowUp: <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />,
         logout: <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />,
         "trending-up": <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />,
-        mail: <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+        mail: <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />,
+        sun: <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />,
+        moon: <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
     };
 
     return (
@@ -57,17 +59,24 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
     return (
         <motion.nav
             initial={{ y: -100 }} animate={{ y: 0 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#0a0e1a]/95 backdrop-blur-xl shadow-sm transition-colors"
+            className="fixed top-0 left-0 right-0 z-50 shadow-sm transition-colors"
             style={{
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                background: 'rgba(10, 15, 25, 0.55)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
                 ...(themeColor ? { borderBottomColor: `${themeColor}20` } : {})
             }}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo Section */}
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => setPage('Home')}>
-                        <img src={BullLogo} className="w-[58px] h-auto object-contain" alt="Tradesnap logo" />
+                    <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setPage('Home')}>
+                        <img
+                            src={BullLogo}
+                            className="w-[58px] h-auto object-contain transition-all duration-300 drop-shadow-[0_0_10px_rgba(14,165,233,0.3)] group-hover:drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]"
+                            alt="Tradesnap logo"
+                        />
                         <span className="text-[22px] font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Tradesnap</span>
                     </div>
 
@@ -77,23 +86,40 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
                             <button
                                 key={item.name}
                                 onClick={() => setPage(item.name)}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 group ${page === item.name ? 'bg-gray-100 dark:bg-gray-800 text-sky-600 dark:text-cyan-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-900'}`}
-                                style={page === item.name && themeColor ? { color: themeColor, backgroundColor: `${themeColor}10` } : undefined}
+                                className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 group ${page === item.name ? 'text-sky-400' : 'text-gray-400 hover:text-white'}`}
+                                style={page === item.name && themeColor ? { color: themeColor } : undefined}
                             >
-                                <Icon name={item.icon} className={`h-4 w-4 transition-all duration-150 ${page === item.name ? '' : 'group-hover:text-sky-500 dark:group-hover:text-cyan-400'}`} />
+                                <Icon name={item.icon} className={`h-4 w-4 transition-all duration-300 ${page === item.name ? 'drop-shadow-[0_0_5px_rgba(14,165,233,0.5)]' : 'group-hover:text-sky-400 group-hover:drop-shadow-[0_0_5px_rgba(14,165,233,0.5)]'}`} />
                                 {item.label}
+                                {page === item.name && (
+                                    <motion.div
+                                        layoutId="navbar-indicator"
+                                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.8)] rounded-full"
+                                        style={themeColor ? { backgroundColor: themeColor, boxShadow: `0 0 10px ${themeColor}` } : undefined}
+                                    />
+                                )}
                             </button>
                         ))}
-                        <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-3" />
+                        <div className="h-6 w-px bg-white/10 mx-3" />
 
-                        <button onClick={() => setPage('Profile')} className="ml-3 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                            <Icon name="profile" className="h-6 w-6 text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-cyan-400 transition-colors" />
+                        <button
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                            className="p-2 hover:bg-white/5 rounded-full transition-colors group"
+                        >
+                            <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="h-5 w-5 text-gray-400 group-hover:text-yellow-400 transition-colors" />
+                        </button>
+
+                        <button onClick={() => setPage('Profile')} className="ml-2 p-1 hover:bg-white/5 rounded-full transition-colors">
+                            <Icon name="profile" className="h-6 w-6 text-gray-400 hover:text-sky-400 transition-colors" />
                         </button>
                     </div>
 
                     {/* Mobile Menu Button */}
                     <div className="lg:hidden flex items-center gap-4">
-                        <button onClick={() => setIsOpen(!isOpen)} className="text-gray-600 dark:text-gray-300">
+                        <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="text-gray-400">
+                            <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="h-5 w-5" />
+                        </button>
+                        <button onClick={() => setIsOpen(!isOpen)} className="text-gray-400">
                             <Icon name={isOpen ? "close" : "menu"} />
                         </button>
                     </div>
@@ -105,14 +131,14 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
                 {isOpen && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                        className="lg:hidden bg-white dark:bg-[#0a0e1a] border-t border-gray-200 dark:border-gray-800 overflow-hidden shadow-xl"
+                        className="lg:hidden bg-[#0a0e1a]/95 border-t border-white/5 overflow-hidden shadow-xl backdrop-blur-xl"
                     >
                         <div className="px-2 pt-2 pb-3 space-y-1">
                             {navItems.map(item => (
                                 <button
                                     key={item.name}
                                     onClick={() => { setPage(item.name); setIsOpen(false); }}
-                                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-md text-base font-medium ${page === item.name ? 'bg-sky-50 dark:bg-cyan-900/20 text-sky-600 dark:text-cyan-400' : 'text-gray-600 dark:text-gray-400'}`}
+                                    className={`flex items-center gap-3 w-full px-3 py-3 rounded-md text-base font-medium ${page === item.name ? 'bg-white/5 text-sky-400' : 'text-gray-400'}`}
                                 >
                                     <Icon name={item.icon} />
                                     {item.label}
@@ -120,7 +146,7 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
                             ))}
                             <button
                                 onClick={() => { setPage('Profile'); setIsOpen(false); }}
-                                className="flex items-center gap-3 w-full px-3 py-3 rounded-md text-base font-medium text-gray-600 dark:text-gray-400"
+                                className="flex items-center gap-3 w-full px-3 py-3 rounded-md text-base font-medium text-gray-400"
                             >
                                 <Icon name="profile" />
                                 Profile
