@@ -34,7 +34,8 @@ export const Icon = ({ name, className }: { name: string, className?: string }) 
         "trending-up": <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />,
         mail: <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />,
         sun: <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />,
-        moon: <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+        moon: <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />,
+        calendar: <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
     };
 
     return (
@@ -46,6 +47,13 @@ export const Icon = ({ name, className }: { name: string, className?: string }) 
 
 export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page: Page, setPage: (p: Page) => void, theme: Theme, setTheme: (t: Theme) => void, themeColor?: string }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const navItems: { name: Page; icon: string; label: string }[] = [
         { name: 'Home', icon: 'home', label: 'Home' },
@@ -59,12 +67,11 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
     return (
         <motion.nav
             initial={{ y: -100 }} animate={{ y: 0 }}
-            className="fixed top-0 left-0 right-0 z-50 shadow-sm transition-colors"
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'shadow-lg border-b border-white/5' : 'shadow-sm border-b border-transparent'}`}
             style={{
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
-                background: 'rgba(10, 15, 25, 0.55)',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                background: scrolled ? 'rgba(10, 15, 25, 0.85)' : 'rgba(10, 15, 25, 0.55)',
                 ...(themeColor ? { borderBottomColor: `${themeColor}20` } : {})
             }}
         >

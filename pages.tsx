@@ -5,6 +5,7 @@ import { useMarketData } from './hooks';
 import * as AiService from './services/geminiService';
 import { fetchNews } from './services/newsService';
 import { Icon, Card, Button, Loader, Modal, NewsCard, Avatar, Tabs, CreateGroupModal, ThemePicker } from './components';
+import HyperspeedBG from './components/HyperspeedBG';
 import type { UserProfile, Page, TraderLabTopic, NewsArticleWithImage, Group, GroupChatMessage } from './types';
 import { PROFILE_AVATARS } from './types';
 import * as FirestoreService from './services/firestoreService';
@@ -47,45 +48,98 @@ export const HomePage: React.FC<{ userProfile: UserProfile, setPage: (page: Page
 
     return (
         <motion.div initial="initial" animate="animate" exit="exit" className="min-h-screen">
-            <section className="relative h-[85vh] flex flex-col items-center justify-center text-center overflow-hidden px-4">
-                <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-transparent dark:from-[#050810] dark:via-[#0a0e1a] dark:to-transparent -z-10" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-sky-500/10 dark:bg-cyan-500/10 blur-[120px] rounded-full -z-10 pointer-events-none" />
+            <section className="relative h-[90vh] flex flex-col items-center justify-center text-center overflow-hidden px-4">
+                {/* Backgrounds */}
+                <div className="absolute inset-0 bg-[#050810] -z-30" />
+                <div className="absolute inset-0 -z-20 opacity-80">
+                    <HyperspeedBG effectOptions={{ preset: "one" }} />
+                </div>
 
-                {/* Floating Particles */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    {[...Array(20)].map((_, i) => (
+                {/* Floating Particles (Subtle) */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+                    {[...Array(15)].map((_, i) => (
                         <motion.div
                             key={i}
                             initial={{ opacity: 0, x: Math.random() * 1000 - 500, y: Math.random() * 500 - 250 }}
-                            animate={{ opacity: [0, 0.5, 0], x: Math.random() * 1000 - 500, y: Math.random() * 500 - 250 }}
-                            transition={{ duration: Math.random() * 5 + 5, repeat: Infinity, ease: "linear" }}
-                            className="absolute top-1/2 left-1/2 w-1 h-1 bg-sky-500 rounded-full"
+                            animate={{
+                                opacity: [0, 0.4, 0],
+                                x: Math.random() * 1200 - 600,
+                                y: Math.random() * 600 - 300,
+                                scale: [0, 1.5, 0]
+                            }}
+                            transition={{ duration: Math.random() * 5 + 8, repeat: Infinity, ease: "easeInOut", delay: Math.random() * 5 }}
+                            className="absolute top-1/2 left-1/2 w-1 h-1 bg-sky-400/50 rounded-full blur-[1px]"
                         />
                     ))}
                 </div>
 
-                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }} className="mb-6 relative z-10">
-                    <span className="px-4 py-1.5 rounded-full border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 text-xs font-bold tracking-wider uppercase mb-6 inline-block backdrop-blur-md">Tradesnap AI 2.0</span>
-                    <h1 className="text-5xl md:text-7xl font-black tracking-tight text-gray-900 dark:text-white mb-6 leading-tight">Precision Trading <br /><span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-cyan-400 dark:to-blue-500">Starts Here.</span></h1>
-                    <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed mb-8">AI-powered analysis, real-time simulation, and a global community of elite traders.</p>
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setPage('Market')}
-                        className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all"
-                    >
-                        Start Trading →
-                    </motion.button>
+                {/* Hero Content with Glassmorphism */}
+                <motion.div
+                    initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    className="relative z-10 max-w-4xl mx-auto"
+                >
+                    <div className="relative bg-[#0a0e1a]/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-16 shadow-2xl overflow-hidden group">
+                        {/* Inner Glow */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-1 bg-gradient-to-r from-transparent via-sky-500 to-transparent opacity-50 blur-sm" />
+                        <div className="absolute -top-[200px] -left-[200px] w-[400px] h-[400px] bg-sky-500/10 rounded-full blur-[100px] pointer-events-none" />
+                        <div className="absolute -bottom-[200px] -right-[200px] w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+                        <motion.span
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="px-4 py-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-400 text-xs font-bold tracking-[0.2em] uppercase mb-8 inline-block shadow-[0_0_15px_rgba(14,165,233,0.2)]"
+                        >
+                            Tradesnap AI 2.0
+                        </motion.span>
+
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white mb-6 leading-[0.9]">
+                            Precision Trading <br />
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 animate-gradient-x">
+                                Starts Here.
+                            </span>
+                        </h1>
+
+                        <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed mb-10 font-light tracking-wide">
+                            Experience the future of market simulation. <br className="hidden md:block" />
+                            AI-powered analysis, real-time data, and a global elite community.
+                        </p>
+
+                        <motion.button
+                            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(14, 165, 233, 0.6)" }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setPage('Market')}
+                            className="relative overflow-hidden bg-white text-black px-10 py-4 rounded-full text-lg font-bold tracking-wide transition-all group-hover:bg-sky-400 group-hover:text-white"
+                        >
+                            <span className="relative z-10 flex items-center gap-2">
+                                Start Trading <Icon name="arrowRight" className="w-5 h-5" />
+                            </span>
+                        </motion.button>
+                    </div>
                 </motion.div>
             </section>
-            <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <section className="py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {features.map((f, i) => (
-                        <div key={i} onClick={() => setPage(f.page as Page)} className="group cursor-pointer relative p-8 rounded-2xl bg-white/50 dark:bg-[#111625]/60 backdrop-blur-sm border border-gray-200 dark:border-gray-800 hover:border-sky-500 dark:hover:border-cyan-500 transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/10 overflow-hidden h-full">
-                            <div className={`p-3 rounded-xl bg-gray-100 dark:bg-gray-800 w-fit mb-4 ${f.color} bg-opacity-10 dark:bg-opacity-20`}><Icon name={f.icon} className="h-6 w-6" /></div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{f.title}</h3>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{f.desc}</p>
-                        </div>
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: i * 0.1 }}
+                            onClick={() => setPage(f.page as Page)}
+                            className="group cursor-pointer relative p-8 rounded-3xl bg-[#111625]/40 backdrop-blur-md border border-white/5 hover:border-sky-500/50 transition-all duration-500 hover:shadow-[0_0_30px_rgba(14,165,233,0.15)] hover:-translate-y-2 overflow-hidden"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className={`p-4 rounded-2xl bg-[#0a0e1a] w-fit mb-6 ${f.color} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                <Icon name={f.icon} className="h-8 w-8" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-3 group-hover:text-sky-400 transition-colors">{f.title}</h3>
+                            <p className="text-gray-500 text-sm leading-relaxed group-hover:text-gray-300 transition-colors">{f.desc}</p>
+                        </motion.div>
                     ))}
                 </div>
             </section>
@@ -464,51 +518,156 @@ export const AnalyzerPage: React.FC = () => {
 // --- PROFILE PAGE ---
 export const ProfilePage: React.FC<{ profile: UserProfile, onProfileUpdate: any, onLogout: () => void }> = ({ profile, onProfileUpdate, onLogout }) => {
     const [edit, setEdit] = useState(profile);
-    const [bio, setBio] = useState("Crypto enthusiast & day trader."); // Local state for now
+    const [bio, setBio] = useState(profile.bio || "Crypto enthusiast & day trader.");
+    const [saving, setSaving] = useState(false);
+
+    const handleSave = async () => {
+        setSaving(true);
+        // Simulate network delay for effect
+        await new Promise(r => setTimeout(r, 800));
+        await onProfileUpdate({ ...edit, bio });
+        setSaving(false);
+    };
+
+    const stats = [
+        { label: 'Total Trades', value: '1,245', icon: 'trend', color: 'text-emerald-400' },
+        { label: 'Win Rate', value: '68%', icon: 'chart', color: 'text-blue-400' },
+        { label: 'Joined', value: profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Nov 2023', icon: 'calendar', color: 'text-purple-400' },
+    ];
+
+    const themeColors = ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
 
     return (
-        <PageWrapper className="max-w-3xl">
-            <div className="bg-white dark:bg-[#111625] border border-gray-200 dark:border-gray-800 rounded-2xl p-8 shadow-sm">
-                <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
-                    <div className="relative group">
-                        <Avatar avatar={edit.avatar} className="h-32 w-32 rounded-full border-4 border-white dark:border-gray-800 shadow-xl" />
-                        <div className="absolute bottom-0 right-0 bg-sky-500 text-white p-2 rounded-full border-4 border-white dark:border-gray-800"><Icon name="upload" className="h-4 w-4" /></div>
-                    </div>
-                    <div className="text-center md:text-left flex-grow">
-                        <h2 className="text-3xl font-bold mb-1">{edit.name}</h2>
-                        <p className="text-gray-500 dark:text-gray-400 mb-4">@{edit.username} • Joined {new Date().toLocaleDateString()}</p>
+        <PageWrapper className="max-w-4xl">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative overflow-hidden rounded-3xl bg-[#0a0e1a]/80 backdrop-blur-xl border border-white/10 shadow-2xl"
+            >
+                {/* Background Glow */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-gradient-to-b from-sky-500/10 to-transparent pointer-events-none" />
 
-                        {/* Progress Meter */}
-                        <div className="mb-2 flex justify-between text-xs font-bold text-gray-500 uppercase tracking-wide">
-                            <span>Profile Completion</span>
-                            <span>85%</span>
+                <div className="relative z-10 p-8 md:p-12">
+                    {/* Header Section */}
+                    <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
+                        <div className="relative">
+                            <motion.div
+                                animate={{
+                                    boxShadow: [
+                                        `0 0 20px ${edit.themeColor || '#0ea5e9'}40`,
+                                        `0 0 40px ${edit.themeColor || '#0ea5e9'}60`,
+                                        `0 0 20px ${edit.themeColor || '#0ea5e9'}40`
+                                    ]
+                                }}
+                                transition={{ duration: 3, repeat: Infinity }}
+                                className="rounded-full p-1 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/10"
+                            >
+                                <Avatar avatar={edit.avatar} className="h-32 w-32 rounded-full border-4 border-[#0a0e1a]" />
+                            </motion.div>
+                            <button className="absolute bottom-2 right-2 p-2 bg-sky-500 hover:bg-sky-400 text-white rounded-full shadow-lg transition-all hover:scale-110">
+                                <Icon name="upload" className="h-4 w-4" />
+                            </button>
                         </div>
-                        <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-sky-400 to-blue-600 w-[85%]" />
+
+                        <div className="text-center md:text-left flex-grow space-y-2">
+                            <h1 className="text-4xl font-black tracking-tight text-white">{edit.name}</h1>
+                            <p className="text-lg text-gray-400 font-medium">@{edit.username}</p>
+                            <div className="flex items-center justify-center md:justify-start gap-2 pt-2">
+                                <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider border border-emerald-500/20">
+                                    Pro Trader
+                                </span>
+                                <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider border border-blue-500/20">
+                                    Level 12
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+                        {stats.map((stat, i) => (
+                            <motion.div
+                                key={i}
+                                whileHover={{ y: -5 }}
+                                className="bg-white/5 border border-white/10 p-6 rounded-2xl flex items-center gap-4"
+                            >
+                                <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
+                                    <Icon name={stat.icon} className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <div className="text-2xl font-bold text-white">{stat.value}</div>
+                                    <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">{stat.label}</div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    {/* Settings Form */}
+                    <div className="space-y-8 bg-black/20 rounded-2xl p-8 border border-white/5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Display Name</label>
+                                <input
+                                    value={edit.name}
+                                    onChange={e => setEdit({ ...edit, name: e.target.value })}
+                                    className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Theme Color</label>
+                                <div className="flex gap-3">
+                                    {themeColors.map(color => (
+                                        <motion.button
+                                            key={color}
+                                            onClick={() => setEdit({ ...edit, themeColor: color })}
+                                            whileHover={{ scale: 1.2 }}
+                                            whileTap={{ scale: 0.9 }}
+                                            className={`w-10 h-10 rounded-full relative ${edit.themeColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0a0e1a]' : ''}`}
+                                            style={{ backgroundColor: color }}
+                                        >
+                                            {edit.themeColor === color && (
+                                                <motion.div
+                                                    layoutId="activeColor"
+                                                    className="absolute inset-0 rounded-full bg-white/30"
+                                                />
+                                            )}
+                                        </motion.button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bio</label>
+                            <textarea
+                                value={bio}
+                                onChange={e => setBio(e.target.value)}
+                                className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all min-h-[120px] resize-none"
+                            />
+                        </div>
+
+                        <div className="pt-4 flex gap-4">
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="flex-grow bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40 transition-all disabled:opacity-50"
+                            >
+                                {saving ? 'Saving...' : 'Save Changes'}
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={onLogout}
+                                className="px-8 py-4 rounded-xl border border-red-500/30 text-red-500 font-bold hover:border-red-500 transition-all"
+                            >
+                                Logout
+                            </motion.button>
                         </div>
                     </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Display Name</label>
-                        <input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:border-sky-500 outline-none transition-colors" placeholder="Display Name" />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Theme Color</label>
-                        <ThemePicker current={edit.themeColor || '#0ea5e9'} onChange={(c) => setEdit({ ...edit, themeColor: c })} />
-                    </div>
-                    <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Bio</label>
-                        <textarea value={bio} onChange={e => setBio(e.target.value)} className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:border-sky-500 outline-none transition-colors min-h-[100px]" placeholder="Tell us about yourself..." />
-                    </div>
-                </div>
-
-                <div className="flex gap-4">
-                    <Button onClick={() => onProfileUpdate(edit)} className="flex-grow">Save Changes</Button>
-                    <Button variant="danger" onClick={onLogout}>Logout</Button>
-                </div>
-            </div>
+            </motion.div>
         </PageWrapper>
     );
 };

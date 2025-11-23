@@ -9,16 +9,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "framer-motion": "^12.23.24",
-    "recharts": "^3.4.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "firebase": "^12.6.0",
     "@firebase/app": "^0.14.6",
+    "@firebase/auth": "^1.11.1",
     "@firebase/firestore": "^4.9.2",
     "@firebase/functions": "^0.13.1",
     "@firebase/storage": "^0.14.0",
-    "@firebase/auth": "^1.11.1"
+    "@types/three": "^0.181.0",
+    "firebase": "^12.6.0",
+    "framer-motion": "^12.23.24",
+    "postprocessing": "^6.38.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "recharts": "^3.4.1",
+    "three": "^0.181.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
