@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { UserProfile, Group, NewsArticleWithImage, Page, Theme } from './types';
 import { PROFILE_AVATARS } from './types';
+import BullLogo from './bull-logo.png';
 
 export const Icon = ({ name, className }: { name: string, className?: string }) => {
     const icons: { [key: string]: React.ReactElement } = {
@@ -62,9 +63,7 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center cursor-pointer gap-3" onClick={() => setPage('Home')}>
-                        <div className="h-9 w-9 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/20" style={themeColor ? { background: themeColor } : undefined}>
-                            <Icon name="spark" className="text-white h-5 w-5" />
-                        </div>
+                        <img src={BullLogo} alt="Tradesnap Logo" className="h-9 w-9 object-contain" />
                         <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Tradesnap</span>
                     </div>
 

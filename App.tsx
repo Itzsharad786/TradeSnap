@@ -6,6 +6,7 @@ import { Loader, TopNavBar, Icon } from './components';
 import type { UserProfile, Page } from './types';
 import * as FirestoreService from './services/firestoreService';
 import * as AuthService from './services/authService';
+import BullLogo from './bull-logo.png';
 
 // --- Main App Component ---
 export default function App() {
@@ -161,9 +162,7 @@ export default function App() {
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md relative z-10">
                     <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl p-8">
                         <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-gradient-to-tr from-sky-500 to-blue-600 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg shadow-sky-500/30">
-                                <Icon name="trending-up" className="h-8 w-8 text-white" />
-                            </div>
+                            <img src={BullLogo} alt="Tradesnap Logo" className="w-16 h-16 mx-auto mb-4 object-contain" />
                             <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Tradesnap</h1>
                             <p className="text-gray-400 mt-2">AI-Powered Trading Simulator</p>
                         </div>
