@@ -6,7 +6,7 @@ import { Loader, TopNavBar, Icon } from './components';
 import type { UserProfile, Page } from './types';
 import * as FirestoreService from './services/firestoreService';
 import * as AuthService from './services/authService';
-import BullLogo from './bull-logo.png';
+import BullLogo from '@/components/bull-logo.png';
 
 // --- Main App Component ---
 export default function App() {
@@ -89,7 +89,7 @@ export default function App() {
             const pendingCode = localStorage.getItem('pendingInviteCode');
             if (pendingCode && userProfile) {
                 try {
-                    const groupId = await FirestoreService.joinGroupByInviteCode(pendingCode, userProfile.uid);
+                    const groupId = await FirestoreService.joinGroupByInviteCode(pendingCode, { uid: userProfile.uid, email: userProfile.email || 'guest' });
                     if (groupId) {
                         setTargetGroupId(groupId);
                         setPage('Community');
