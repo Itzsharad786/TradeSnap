@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme, useLocalStorage } from './hooks';
 import { HomePage, MarketPage, NewsPage, AnalyzerPage, TraderLabPage, CommunityPage, ProfilePage } from './pages';
-import { Loader, TopNavBar, Icon } from './components';
+import { Loader, TopNavBar, Icon, Footer } from './components';
 import type { UserProfile, Page } from './types';
 import * as FirestoreService from './services/firestoreService';
 import * as AuthService from './services/authService';
@@ -230,9 +230,9 @@ export default function App() {
 
     // Render Main App
     return (
-        <div className={`min-h-screen bg-gray-50 dark:bg-[#0a0e1a] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300`}>
+        <div className={`min-h-screen bg-gray-50 dark:bg-[#0a0e1a] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 flex flex-col`}>
             <TopNavBar page={page} setPage={setPage} theme={userProfile?.theme || 'dark'} setTheme={handleSetTheme} themeColor={userProfile?.themeColor} />
-            <main className="pt-20 pb-24 md:pb-8 px-4 max-w-7xl mx-auto">
+            <main className="pt-20 px-4 max-w-7xl mx-auto w-full flex-grow">
                 <AnimatePresence mode="wait">
                     <motion.div key={page} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                         {page === 'Home' && <HomePage userProfile={userProfile} setPage={setPage} />}
@@ -245,9 +245,7 @@ export default function App() {
                     </motion.div>
                 </AnimatePresence>
             </main>
-            <div className="fixed bottom-0 left-0 w-full text-center py-2 bg-white/80 dark:bg-black/80 backdrop-blur-md text-[10px] text-gray-500 z-40 border-t border-gray-200 dark:border-gray-800">
-                Not financial advice. Use at your own risk.
-            </div>
+            <Footer />
         </div>
     );
 }

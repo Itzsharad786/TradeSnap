@@ -50,10 +50,32 @@ export const HomePage: React.FC<{ userProfile: UserProfile, setPage: (page: Page
             <section className="relative h-[85vh] flex flex-col items-center justify-center text-center overflow-hidden px-4">
                 <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-transparent dark:from-[#050810] dark:via-[#0a0e1a] dark:to-transparent -z-10" />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-sky-500/10 dark:bg-cyan-500/10 blur-[120px] rounded-full -z-10 pointer-events-none" />
-                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }} className="mb-6">
-                    <span className="px-4 py-1.5 rounded-full border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 text-xs font-bold tracking-wider uppercase mb-6 inline-block">Tradesnap AI 2.0</span>
+
+                {/* Floating Particles */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    {[...Array(20)].map((_, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: Math.random() * 1000 - 500, y: Math.random() * 500 - 250 }}
+                            animate={{ opacity: [0, 0.5, 0], x: Math.random() * 1000 - 500, y: Math.random() * 500 - 250 }}
+                            transition={{ duration: Math.random() * 5 + 5, repeat: Infinity, ease: "linear" }}
+                            className="absolute top-1/2 left-1/2 w-1 h-1 bg-sky-500 rounded-full"
+                        />
+                    ))}
+                </div>
+
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }} className="mb-6 relative z-10">
+                    <span className="px-4 py-1.5 rounded-full border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 text-xs font-bold tracking-wider uppercase mb-6 inline-block backdrop-blur-md">Tradesnap AI 2.0</span>
                     <h1 className="text-5xl md:text-7xl font-black tracking-tight text-gray-900 dark:text-white mb-6 leading-tight">Precision Trading <br /><span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-cyan-400 dark:to-blue-500">Starts Here.</span></h1>
-                    <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">AI-powered analysis, real-time simulation, and a global community of elite traders.</p>
+                    <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed mb-8">AI-powered analysis, real-time simulation, and a global community of elite traders.</p>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setPage('Market')}
+                        className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-xl text-lg font-bold shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all"
+                    >
+                        Start Trading →
+                    </motion.button>
                 </motion.div>
             </section>
             <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto">
@@ -113,7 +135,7 @@ export const MarketPage: React.FC = () => {
     );
 };
 
-// --- COMMUNITY COMPONENTS (Inlined for portability) ---
+// --- COMMUNITY COMPONENTS ---
 
 const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: Group) => void }> = ({ userProfile, onSelectGroup }) => {
     const [activeTab, setActiveTab] = useState<'explore' | 'my_groups'>('explore');
@@ -124,6 +146,7 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
     const [showCreate, setShowCreate] = useState(false);
     const [joinCode, setJoinCode] = useState('');
     const [joining, setJoining] = useState(false);
+    const [search, setSearch] = useState('');
 
     // Fetch public groups for explore tab
     useEffect(() => {
@@ -177,17 +200,19 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
     };
 
     const renderGroupCard = (g: Group, isOwned: boolean = false) => (
-        <Card key={g.id} className="hover:border-sky-500 cursor-pointer transition-all" onClick={() => onSelectGroup(g)}>
-            <div className="flex items-center gap-3 mb-4">
-                <Avatar avatar={g.avatarUrl || 'community'} className="h-12 w-12 rounded-xl" />
-                <div className="flex-grow">
-                    <div className="flex items-center gap-2">
-                        <h3 className="font-bold">{g.name}</h3>
-                        {g.isPrivate && <Icon name="lock" className="h-4 w-4 text-amber-500" />}
-                    </div>
-                    <div className="text-xs text-gray-500 flex items-center gap-2">
-                        {isOwned && <span className="px-2 py-0.5 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded font-bold">Owned by you</span>}
-                        <span>{g.isPrivate ? 'Private' : 'Public'} • {g.members?.length || 0} Members</span>
+        <Card key={g.id} className="hover:border-sky-500 cursor-pointer transition-all hover:-translate-y-1 shadow-sm hover:shadow-lg" onClick={() => onSelectGroup(g)}>
+            <div className="relative">
+                <div className="h-16 bg-gradient-to-r from-sky-500/10 to-blue-600/10 rounded-t-xl -mx-6 -mt-6 mb-4" />
+                <div className="flex items-center gap-3 mb-4 -mt-8 px-2">
+                    <Avatar avatar={g.avatarUrl || 'community'} className="h-14 w-14 rounded-xl border-4 border-white dark:border-[#111625] shadow-md" />
+                    <div className="flex-grow pt-6">
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-lg leading-none">{g.name}</h3>
+                            {g.isPrivate && <Icon name="lock" className="h-3 w-3 text-amber-500" />}
+                        </div>
+                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                            {isOwned ? <span className="text-sky-500 font-bold">Owner</span> : <span>{g.members?.length || 0} Members</span>}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -195,25 +220,43 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
         </Card>
     );
 
+    const filteredPublic = publicGroups.filter(g => g.name.toLowerCase().includes(search.toLowerCase()) || g.description?.toLowerCase().includes(search.toLowerCase()));
+
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-end">
+            <div className="flex flex-col md:flex-row justify-between items-end gap-4">
                 <div><h2 className="text-3xl font-bold">Community</h2><p className="text-gray-500">Join elite trading groups.</p></div>
-                <div className="flex gap-2">
-                    <div className="relative"><input value={joinCode} onChange={e => setJoinCode(e.target.value)} placeholder="Invite Code" className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm w-32" /><button onClick={handleJoinByCode} disabled={!joinCode || joining} className="absolute right-1 top-1 bottom-1 px-2 bg-sky-500 text-white rounded text-xs">Join</button></div>
+                <div className="flex gap-2 w-full md:w-auto">
+                    <div className="relative flex-grow md:flex-grow-0">
+                        <input value={joinCode} onChange={e => setJoinCode(e.target.value)} placeholder="Invite Code" className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm w-full md:w-32" />
+                        <button onClick={handleJoinByCode} disabled={!joinCode || joining} className="absolute right-1 top-1 bottom-1 px-2 bg-sky-500 text-white rounded text-xs">Join</button>
+                    </div>
                     <Button onClick={() => setShowCreate(true)}><Icon name="plus" /> Create</Button>
                 </div>
             </div>
+
             <div className="flex border-b border-gray-200 dark:border-gray-800">
                 <button className={`px-6 py-3 font-bold text-sm border-b-2 ${activeTab === 'explore' ? 'border-sky-500 text-sky-500' : 'border-transparent text-gray-500'}`} onClick={() => setActiveTab('explore')}>Explore</button>
                 <button className={`px-6 py-3 font-bold text-sm border-b-2 ${activeTab === 'my_groups' ? 'border-sky-500 text-sky-500' : 'border-transparent text-gray-500'}`} onClick={() => setActiveTab('my_groups')}>My Groups</button>
             </div>
+
             {loading ? <Loader text="Loading..." /> : (
                 <>
                     {activeTab === 'explore' && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {publicGroups.map(g => renderGroupCard(g, userProfile?.uid === g.ownerUid))}
-                        </div>
+                        <>
+                            <div className="relative mb-6">
+                                <Icon name="search" className="absolute left-4 top-3.5 text-gray-400 h-5 w-5" />
+                                <input
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder="Search communities..."
+                                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-white dark:bg-[#111625] border border-gray-200 dark:border-gray-800 focus:border-sky-500 outline-none transition-all shadow-sm"
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {filteredPublic.map(g => renderGroupCard(g, userProfile?.uid === g.ownerUid))}
+                            </div>
+                        </>
                     )}
                     {activeTab === 'my_groups' && (
                         <div className="space-y-8">
@@ -421,19 +464,51 @@ export const AnalyzerPage: React.FC = () => {
 // --- PROFILE PAGE ---
 export const ProfilePage: React.FC<{ profile: UserProfile, onProfileUpdate: any, onLogout: () => void }> = ({ profile, onProfileUpdate, onLogout }) => {
     const [edit, setEdit] = useState(profile);
+    const [bio, setBio] = useState("Crypto enthusiast & day trader."); // Local state for now
+
     return (
-        <PageWrapper className="max-w-2xl">
-            <div className="text-center mb-8">
-                <Avatar avatar={edit.avatar} className="h-24 w-24 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold">{edit.name}</h2>
-                <p className="text-gray-500">@{edit.username}</p>
+        <PageWrapper className="max-w-3xl">
+            <div className="bg-white dark:bg-[#111625] border border-gray-200 dark:border-gray-800 rounded-2xl p-8 shadow-sm">
+                <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
+                    <div className="relative group">
+                        <Avatar avatar={edit.avatar} className="h-32 w-32 rounded-full border-4 border-white dark:border-gray-800 shadow-xl" />
+                        <div className="absolute bottom-0 right-0 bg-sky-500 text-white p-2 rounded-full border-4 border-white dark:border-gray-800"><Icon name="upload" className="h-4 w-4" /></div>
+                    </div>
+                    <div className="text-center md:text-left flex-grow">
+                        <h2 className="text-3xl font-bold mb-1">{edit.name}</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">@{edit.username} • Joined {new Date().toLocaleDateString()}</p>
+
+                        {/* Progress Meter */}
+                        <div className="mb-2 flex justify-between text-xs font-bold text-gray-500 uppercase tracking-wide">
+                            <span>Profile Completion</span>
+                            <span>85%</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-sky-400 to-blue-600 w-[85%]" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Display Name</label>
+                        <input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:border-sky-500 outline-none transition-colors" placeholder="Display Name" />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Theme Color</label>
+                        <ThemePicker current={edit.themeColor || '#0ea5e9'} onChange={(c) => setEdit({ ...edit, themeColor: c })} />
+                    </div>
+                    <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Bio</label>
+                        <textarea value={bio} onChange={e => setBio(e.target.value)} className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:border-sky-500 outline-none transition-colors min-h-[100px]" placeholder="Tell us about yourself..." />
+                    </div>
+                </div>
+
+                <div className="flex gap-4">
+                    <Button onClick={() => onProfileUpdate(edit)} className="flex-grow">Save Changes</Button>
+                    <Button variant="danger" onClick={onLogout}>Logout</Button>
+                </div>
             </div>
-            <div className="space-y-4 mb-8">
-                <input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} className="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-800" placeholder="Display Name" />
-                <ThemePicker current={edit.themeColor || '#0ea5e9'} onChange={(c) => setEdit({ ...edit, themeColor: c })} />
-                <Button onClick={() => onProfileUpdate(edit)} className="w-full">Save Profile</Button>
-            </div>
-            <Button variant="danger" onClick={onLogout} className="w-full">Logout</Button>
         </PageWrapper>
     );
 };

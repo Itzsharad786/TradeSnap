@@ -86,7 +86,7 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
                             <button
                                 key={item.name}
                                 onClick={() => setPage(item.name)}
-                                className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 group ${page === item.name ? 'text-sky-400' : 'text-gray-400 hover:text-white'}`}
+                                className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 group ${page === item.name ? 'text-sky-400 bg-white/5' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                                 style={page === item.name && themeColor ? { color: themeColor } : undefined}
                             >
                                 <Icon name={item.icon} className={`h-4 w-4 transition-all duration-300 ${page === item.name ? 'drop-shadow-[0_0_5px_rgba(14,165,233,0.5)]' : 'group-hover:text-sky-400 group-hover:drop-shadow-[0_0_5px_rgba(14,165,233,0.5)]'}`} />
@@ -378,3 +378,45 @@ export const ThemePicker = ({ current, onChange }: { current: string, onChange: 
         </div>
     );
 };
+
+export const Footer = () => (
+    <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0e1a] pt-16 pb-8 mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+                <div>
+                    <h4 className="font-bold text-lg mb-4">Tradesnap</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">AI-powered trading simulation for the modern era.</p>
+                </div>
+                <div>
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Platform</h4>
+                    <ul className="space-y-2 text-sm">
+                        <li><a href="#" className="hover:text-sky-500 transition-colors">Markets</a></li>
+                        <li><a href="#" className="hover:text-sky-500 transition-colors">Analyzer</a></li>
+                        <li><a href="#" className="hover:text-sky-500 transition-colors">Community</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Company</h4>
+                    <ul className="space-y-2 text-sm">
+                        <li><a href="#" className="hover:text-sky-500 transition-colors">About</a></li>
+                        <li><a href="#" className="hover:text-sky-500 transition-colors">Careers</a></li>
+                        <li><a href="#" className="hover:text-sky-500 transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">Legal</h4>
+                    <ul className="space-y-2 text-sm">
+                        <li><a href="#" className="hover:text-sky-500 transition-colors">Privacy</a></li>
+                        <li><a href="#" className="hover:text-sky-500 transition-colors">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-200 dark:border-gray-800">
+                <p className="text-xs text-gray-500">© 2024 Tradesnap. Not financial advice.</p>
+                <div className="flex gap-4 mt-4 md:mt-0">
+                    <Icon name="globe" className="h-5 w-5 text-gray-400 hover:text-white transition-colors cursor-pointer" />
+                </div>
+            </div>
+        </div>
+    </footer>
+);
