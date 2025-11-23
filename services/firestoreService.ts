@@ -49,6 +49,22 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
     return null;
 };
 
+export const listenToUserProfile = (uid: string, callback: (profile: UserProfile | null) => void): Unsubscribe => {
+    const docRef = doc(db, "users", uid);
+    return onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            callback({
+                uid,
+                ...data,
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+            } as UserProfile);
+        } else {
+            callback(null);
+        }
+    });
+};
+
 export const createOrUpdateUserProfile = async (profileData: UserProfile): Promise<void> => {
     const { uid, ...dataToSet } = profileData;
     const docRef = doc(db, "users", uid);

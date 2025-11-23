@@ -516,26 +516,72 @@ export const AnalyzerPage: React.FC = () => {
 };
 
 // --- PROFILE PAGE ---
-export const ProfilePage: React.FC<{ profile: UserProfile, onProfileUpdate: any, onLogout: () => void }> = ({ profile, onProfileUpdate, onLogout }) => {
-    const [edit, setEdit] = useState(profile);
-    const [bio, setBio] = useState(profile.bio || "Crypto enthusiast & day trader.");
+export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: string | null, onProfileUpdate: any, onLogout: () => void }> = ({ profile, viewUid, onProfileUpdate, onLogout }) => {
+    const [displayProfile, setDisplayProfile] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
+    // Determine which UID to show
+    const targetUid = viewUid || (profile ? profile.uid : null);
+    const isOwnProfile = profile && targetUid === profile.uid;
+
+    // Listen for profile changes
+    useEffect(() => {
+        if (!targetUid) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        const unsubscribe = FirestoreService.listenToUserProfile(targetUid, (fetchedProfile) => {
+            setDisplayProfile(fetchedProfile);
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, [targetUid]);
+
+    // Local edit state (initialized when displayProfile loads)
+    const [editName, setEditName] = useState('');
+    const [editBio, setEditBio] = useState('');
+
+    useEffect(() => {
+        if (displayProfile) {
+            setEditName(displayProfile.name || '');
+            setEditBio(displayProfile.bio || "Crypto enthusiast & day trader.");
+        }
+    }, [displayProfile]);
+
     const handleSave = async () => {
+        if (!isOwnProfile || !displayProfile) return;
         setSaving(true);
-        // Simulate network delay for effect
-        await new Promise(r => setTimeout(r, 800));
-        await onProfileUpdate({ ...edit, bio });
+        const updated = { ...displayProfile, name: editName, bio: editBio };
+        await FirestoreService.createOrUpdateUserProfile(updated);
+        onProfileUpdate(updated); // Update global app state
         setSaving(false);
+    };
+
+    const handleThemeChange = async (color: string) => {
+        if (!isOwnProfile || !displayProfile) return;
+
+        // 1. Optimistic UI Update
+        const updated = { ...displayProfile, themeColor: color };
+        setDisplayProfile(updated);
+
+        // 2. Update Global App State (for Navbar etc)
+        onProfileUpdate(updated);
+
+        // 3. Persist to Firestore
+        await FirestoreService.createOrUpdateUserProfile(updated);
     };
 
     const stats = [
         { label: 'Total Trades', value: '1,245', icon: 'trend', color: 'text-emerald-400' },
         { label: 'Win Rate', value: '68%', icon: 'chart', color: 'text-blue-400' },
-        { label: 'Joined', value: profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'Nov 2023', icon: 'calendar', color: 'text-purple-400' },
+        { label: 'Joined', value: displayProfile?.createdAt ? new Date(displayProfile.createdAt).toLocaleDateString() : 'Nov 2023', icon: 'calendar', color: 'text-purple-400' },
     ];
 
-    const themeColors = ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
+    if (!targetUid) return <PageWrapper><div className="text-center mt-20">Profile not found.</div></PageWrapper>;
+    if (loading) return <PageWrapper><Loader text="Loading Profile..." /></PageWrapper>;
+    if (!displayProfile) return <PageWrapper><div className="text-center mt-20">User not found.</div></PageWrapper>;
 
     return (
         <PageWrapper className="max-w-4xl">
@@ -554,24 +600,26 @@ export const ProfilePage: React.FC<{ profile: UserProfile, onProfileUpdate: any,
                             <motion.div
                                 animate={{
                                     boxShadow: [
-                                        `0 0 20px ${edit.themeColor || '#0ea5e9'}40`,
-                                        `0 0 40px ${edit.themeColor || '#0ea5e9'}60`,
-                                        `0 0 20px ${edit.themeColor || '#0ea5e9'}40`
+                                        `0 0 20px ${displayProfile.themeColor || '#0ea5e9'}40`,
+                                        `0 0 40px ${displayProfile.themeColor || '#0ea5e9'}60`,
+                                        `0 0 20px ${displayProfile.themeColor || '#0ea5e9'}40`
                                     ]
                                 }}
                                 transition={{ duration: 3, repeat: Infinity }}
                                 className="rounded-full p-1 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/10"
                             >
-                                <Avatar avatar={edit.avatar} className="h-32 w-32 rounded-full border-4 border-[#0a0e1a]" />
+                                <Avatar avatar={displayProfile.avatar} className="h-32 w-32 rounded-full border-4 border-[#0a0e1a]" />
                             </motion.div>
-                            <button className="absolute bottom-2 right-2 p-2 bg-sky-500 hover:bg-sky-400 text-white rounded-full shadow-lg transition-all hover:scale-110">
-                                <Icon name="upload" className="h-4 w-4" />
-                            </button>
+                            {isOwnProfile && (
+                                <button className="absolute bottom-2 right-2 p-2 bg-sky-500 hover:bg-sky-400 text-white rounded-full shadow-lg transition-all hover:scale-110">
+                                    <Icon name="upload" className="h-4 w-4" />
+                                </button>
+                            )}
                         </div>
 
                         <div className="text-center md:text-left flex-grow space-y-2">
-                            <h1 className="text-4xl font-black tracking-tight text-white">{edit.name}</h1>
-                            <p className="text-lg text-gray-400 font-medium">@{edit.username}</p>
+                            <h1 className="text-4xl font-black tracking-tight text-white">{displayProfile.name}</h1>
+                            <p className="text-lg text-gray-400 font-medium">@{displayProfile.username || 'user'}</p>
                             <div className="flex items-center justify-center md:justify-start gap-2 pt-2">
                                 <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider border border-emerald-500/20">
                                     Pro Trader
@@ -602,70 +650,59 @@ export const ProfilePage: React.FC<{ profile: UserProfile, onProfileUpdate: any,
                         ))}
                     </div>
 
-                    {/* Settings Form */}
-                    <div className="space-y-8 bg-black/20 rounded-2xl p-8 border border-white/5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Display Name</label>
-                                <input
-                                    value={edit.name}
-                                    onChange={e => setEdit({ ...edit, name: e.target.value })}
-                                    className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Theme Color</label>
-                                <div className="flex gap-3">
-                                    {themeColors.map(color => (
-                                        <motion.button
-                                            key={color}
-                                            onClick={() => setEdit({ ...edit, themeColor: color })}
-                                            whileHover={{ scale: 1.2 }}
-                                            whileTap={{ scale: 0.9 }}
-                                            className={`w-10 h-10 rounded-full relative ${edit.themeColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0a0e1a]' : ''}`}
-                                            style={{ backgroundColor: color }}
-                                        >
-                                            {edit.themeColor === color && (
-                                                <motion.div
-                                                    layoutId="activeColor"
-                                                    className="absolute inset-0 rounded-full bg-white/30"
-                                                />
-                                            )}
-                                        </motion.button>
-                                    ))}
+                    {/* Settings Form (Only if Own Profile) */}
+                    {isOwnProfile ? (
+                        <div className="space-y-8 bg-black/20 rounded-2xl p-8 border border-white/5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Display Name</label>
+                                    <input
+                                        value={editName}
+                                        onChange={e => setEditName(e.target.value)}
+                                        className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Theme Color</label>
+                                    <ThemePicker current={displayProfile.themeColor || '#0ea5e9'} onChange={handleThemeChange} />
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bio</label>
-                            <textarea
-                                value={bio}
-                                onChange={e => setBio(e.target.value)}
-                                className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all min-h-[120px] resize-none"
-                            />
-                        </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bio</label>
+                                <textarea
+                                    value={editBio}
+                                    onChange={e => setEditBio(e.target.value)}
+                                    className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all min-h-[120px] resize-none"
+                                />
+                            </div>
 
-                        <div className="pt-4 flex gap-4">
-                            <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="flex-grow bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40 transition-all disabled:opacity-50"
-                            >
-                                {saving ? 'Saving...' : 'Save Changes'}
-                            </motion.button>
-                            <motion.button
-                                whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={onLogout}
-                                className="px-8 py-4 rounded-xl border border-red-500/30 text-red-500 font-bold hover:border-red-500 transition-all"
-                            >
-                                Logout
-                            </motion.button>
+                            <div className="pt-4 flex gap-4">
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="flex-grow bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40 transition-all disabled:opacity-50"
+                                >
+                                    {saving ? 'Saving...' : 'Save Changes'}
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={onLogout}
+                                    className="px-8 py-4 rounded-xl border border-red-500/30 text-red-500 font-bold hover:border-red-500 transition-all"
+                                >
+                                    Logout
+                                </motion.button>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="space-y-4 bg-black/20 rounded-2xl p-8 border border-white/5">
+                            <h3 className="text-xl font-bold text-white">About</h3>
+                            <p className="text-gray-400 leading-relaxed">{displayProfile.bio || "No bio available."}</p>
+                        </div>
+                    )}
                 </div>
             </motion.div>
         </PageWrapper>

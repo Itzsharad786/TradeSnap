@@ -101,8 +101,8 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
                                 {page === item.name && (
                                     <motion.div
                                         layoutId="navbar-indicator"
-                                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.8)] rounded-full"
-                                        style={themeColor ? { backgroundColor: themeColor, boxShadow: `0 0 10px ${themeColor}` } : undefined}
+                                        className="absolute bottom-0 left-0 right-0 h-[2px] shadow-[0_0_10px_rgba(14,165,233,0.8)] rounded-full"
+                                        style={{ backgroundColor: 'var(--theme-color)', boxShadow: `0 0 10px var(--theme-color)` }}
                                     />
                                 )}
                             </button>
@@ -192,19 +192,23 @@ export const Card: React.FC<React.PropsWithChildren<{ className?: string; onClic
     </motion.div>
 );
 
-export const Button: React.FC<React.PropsWithChildren<{ onClick?: any; className?: string; disabled?: boolean; variant?: 'primary' | 'secondary' | 'outline' | 'danger' }>> = ({ children, onClick, className, disabled, variant = 'primary' }) => {
+export const Button: React.FC<React.PropsWithChildren<{ onClick?: any; className?: string; disabled?: boolean; variant?: 'primary' | 'secondary' | 'outline' | 'danger'; style?: React.CSSProperties }>> = ({ children, onClick, className, disabled, variant = 'primary', style }) => {
     const variants = {
-        primary: 'bg-gradient-to-r from-gray-900 to-black dark:from-white dark:to-gray-200 text-white dark:text-black hover:opacity-90 shadow-lg',
+        primary: 'text-white shadow-lg hover:opacity-90',
         secondary: 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700',
         outline: 'border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800',
         danger: 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
     };
+
+    const finalStyle = variant === 'primary' ? { backgroundColor: 'var(--theme-color)', ...style } : style;
+
     return (
         <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={onClick}
             disabled={disabled}
             className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+            style={finalStyle}
         >
             {children}
         </motion.button>
@@ -374,13 +378,22 @@ export const ThemePicker = ({ current, onChange }: { current: string, onChange: 
     const colors = ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
     return (
         <div className="flex gap-3 flex-wrap">
-            {colors.map(c => (
-                <button
-                    key={c}
-                    onClick={() => onChange(c)}
-                    className={`w-8 h-8 rounded-full shadow-md transition-transform hover:scale-110 ${current === c ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 ring-gray-400' : ''}`}
-                    style={{ backgroundColor: c }}
-                />
+            {colors.map(color => (
+                <motion.button
+                    key={color}
+                    onClick={() => onChange(color)}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    className={`w-10 h-10 rounded-full relative ${current === color ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0a0e1a]' : ''}`}
+                    style={{ backgroundColor: color }}
+                >
+                    {current === color && (
+                        <motion.div
+                            layoutId="activeColor"
+                            className="absolute inset-0 rounded-full bg-white/30"
+                        />
+                    )}
+                </motion.button>
             ))}
         </div>
     );

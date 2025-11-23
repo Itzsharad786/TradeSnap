@@ -44,9 +44,16 @@ export default function App() {
         if (userProfile?.theme) handleSetTheme(userProfile.theme);
     }, [userProfile?.theme]);
 
-    const [targetGroupId, setTargetGroupId] = useState<string | undefined>(undefined);
+    // Update Global Theme Color Variable
+    useEffect(() => {
+        const color = userProfile?.themeColor || '#0ea5e9';
+        document.documentElement.style.setProperty('--theme-color', color);
+    }, [userProfile?.themeColor]);
 
-    // Handle Invite Links & Magic Link Login on Mount
+    const [targetGroupId, setTargetGroupId] = useState<string | undefined>(undefined);
+    const [viewProfileUid, setViewProfileUid] = useState<string | null>(null);
+
+    // Handle Invite Links, Profile Links & Magic Link Login on Mount
     useEffect(() => {
         const init = async () => {
             // Check for Magic Link Login
@@ -63,13 +70,23 @@ export default function App() {
                 }
             }
 
-            // Check for Invite Link
             const path = window.location.pathname;
+
+            // Check for Invite Link
             if (path.startsWith('/join/')) {
                 const inviteCode = path.split('/join/')[1];
                 if (inviteCode) {
                     localStorage.setItem('pendingInviteCode', inviteCode);
                     window.history.replaceState({}, '', '/');
+                }
+            }
+
+            // Check for Profile Link
+            if (path.startsWith('/profile/')) {
+                const uid = path.split('/profile/')[1];
+                if (uid) {
+                    setViewProfileUid(uid);
+                    setPage('Profile');
                 }
             }
 
@@ -153,7 +170,7 @@ export default function App() {
     };
 
     // Render Login/Signup Screen
-    if (!userProfile) {
+    if (!userProfile && !viewProfileUid) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white p-4 relative overflow-hidden">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-sky-500/20 rounded-full blur-[100px] animate-pulse" />
@@ -241,7 +258,7 @@ export default function App() {
                         {page === 'Analyzer' && <AnalyzerPage />}
                         {page === 'TraderLab' && <TraderLabPage />}
                         {page === 'Community' && <CommunityPage initialGroupId={targetGroupId} userProfile={userProfile} />}
-                        {page === 'Profile' && <ProfilePage profile={userProfile} onProfileUpdate={handleUpdateProfile} onLogout={handleLogout} />}
+                        {page === 'Profile' && <ProfilePage profile={userProfile} viewUid={viewProfileUid} onProfileUpdate={handleUpdateProfile} onLogout={handleLogout} />}
                     </motion.div>
                 </AnimatePresence>
             </main>
