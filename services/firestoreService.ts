@@ -76,8 +76,6 @@ export const createOrUpdateUserProfile = async (profileData: UserProfile): Promi
 
 // --- Group Functions ---
 
-// --- Group Functions ---
-
 // Simple client-side hash for password (in a real app, use a server function)
 const hashPassword = async (password: string): Promise<string> => {
     const msgBuffer = new TextEncoder().encode(password);
@@ -151,13 +149,17 @@ export const createGroup = async (groupData: {
         const sanitized = sanitizeData(safeData);
         const docRef = await addDoc(collectionRef, sanitized);
 
-        // Update user's group count
+        // Update user's group count and groupMembers collection
         const userRef = doc(db, "users", groupData.ownerUid);
         const countField = groupData.type === 'public' ? 'publicGroupsCount' : 'privateGroupsCount';
         const currentCount = (groupData.type === 'public' ? publicCount : privateCount);
-        await updateDoc(userRef, {
-            [countField]: currentCount + 1
-        });
+
+        await Promise.all([
+            updateDoc(userRef, { [countField]: currentCount + 1 }),
+            setDoc(doc(db, "groupMembers", groupData.ownerUid), {
+                groups: arrayUnion(docRef.id)
+            }, { merge: true })
+        ]);
 
         return docRef.id;
     } catch (error) {
@@ -184,7 +186,7 @@ export const deleteGroup = async (groupId: string) => {
         // Delete the group
         await deleteDoc(groupRef);
 
-        // Decrement user's group count
+        // Decrement user's group count and remove from groupMembers
         if (ownerUid) {
             const userRef = doc(db, "users", ownerUid);
             const countField = groupType === 'public' ? 'publicGroupsCount' : 'privateGroupsCount';
@@ -198,6 +200,9 @@ export const deleteGroup = async (groupId: string) => {
                     });
                 }
             }
+
+            // Also remove from groupMembers for all members (optional but good for cleanup)
+            // For now, just owner's list or rely on read-time filtering
         }
     }
 };
@@ -229,10 +234,15 @@ export const joinGroup = async (groupId: string, user: { uid: string, email: str
         role: 'member'
     };
 
-    await updateDoc(docRef, {
-        members: arrayUnion(memberData),
-        membersUidList: arrayUnion(user.uid)
-    });
+    await Promise.all([
+        updateDoc(docRef, {
+            members: arrayUnion(memberData),
+            membersUidList: arrayUnion(user.uid)
+        }),
+        setDoc(doc(db, "groupMembers", user.uid), {
+            groups: arrayUnion(groupId)
+        }, { merge: true })
+    ]);
 
     return true;
 };
@@ -246,10 +256,15 @@ export const leaveGroup = async (groupId: string, user: { uid: string, email: st
     const memberToRemove = groupData.members.find((m: any) => m.uid === user.uid);
 
     if (memberToRemove) {
-        await updateDoc(docRef, {
-            members: arrayRemove(memberToRemove),
-            membersUidList: arrayRemove(user.uid)
-        });
+        await Promise.all([
+            updateDoc(docRef, {
+                members: arrayRemove(memberToRemove),
+                membersUidList: arrayRemove(user.uid)
+            }),
+            setDoc(doc(db, "groupMembers", user.uid), {
+                groups: arrayRemove(groupId)
+            }, { merge: true })
+        ]);
     }
 };
 
@@ -333,10 +348,15 @@ export const joinGroupByInviteCode = async (inviteCode: string, user: { uid: str
         role: 'member'
     };
 
-    await updateDoc(doc(db, "groups", groupId), {
-        members: arrayUnion(memberData),
-        membersUidList: arrayUnion(user.uid)
-    });
+    await Promise.all([
+        updateDoc(doc(db, "groups", groupId), {
+            members: arrayUnion(memberData),
+            membersUidList: arrayUnion(user.uid)
+        }),
+        setDoc(doc(db, "groupMembers", user.uid), {
+            groups: arrayUnion(groupId)
+        }, { merge: true })
+    ]);
 
     return groupId;
 };
@@ -411,10 +431,15 @@ export const joinGroupByInviteCodeAndPassword = async (
             lastSeen: serverTimestamp()
         };
 
-        await updateDoc(doc(db, "groups", groupId), {
-            members: arrayUnion(memberData),
-            membersUidList: arrayUnion(user.uid)
-        });
+        await Promise.all([
+            updateDoc(doc(db, "groups", groupId), {
+                members: arrayUnion(memberData),
+                membersUidList: arrayUnion(user.uid)
+            }),
+            setDoc(doc(db, "groupMembers", user.uid), {
+                groups: arrayUnion(groupId)
+            }, { merge: true })
+        ]);
 
         return { success: true, groupId };
     } catch (error) {
@@ -422,4 +447,3 @@ export const joinGroupByInviteCodeAndPassword = async (
         return { success: false, error: "Failed to join group" };
     }
 };
-

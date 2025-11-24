@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from './firebase/index';
 import * as FirestoreService from './services/firestoreService';
+import { getUserGroupCounts, joinGroupByInviteCodeAndPassword } from './services/firestoreService';
 import * as AiService from './services/geminiService';
 import { fetchNews } from './services/newsService';
 import HyperspeedBG from './components/HyperspeedBG';
@@ -199,6 +200,13 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
     const [joinCode, setJoinCode] = useState('');
     const [joining, setJoining] = useState(false);
     const [search, setSearch] = useState('');
+    const [groupCounts, setGroupCounts] = useState({ publicCount: 0, privateCount: 0 });
+
+    useEffect(() => {
+        if (userProfile) {
+            FirestoreService.getUserGroupCounts(userProfile.uid).then(setGroupCounts);
+        }
+    }, [userProfile]);
 
     // Fetch public groups for explore tab
     useEffect(() => {
@@ -236,18 +244,39 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
                 ...data,
                 ownerUid: userProfile.uid,
                 ownerEmail: userProfile.email || 'guest',
-                members: [{ uid: userProfile.uid, email: userProfile.email || 'guest', joinedAt: new Date().toISOString() }]
+                avatarUrl: 'community'
             });
-            setShowCreate(false); setActiveTab('my_groups');
-        } catch (e) { alert('Failed to create group'); }
+            setShowCreate(false);
+            setActiveTab('my_groups');
+            FirestoreService.getUserGroupCounts(userProfile.uid).then(setGroupCounts);
+        } catch (e: any) { alert(e.message || 'Failed to create group'); }
     };
 
     const handleJoinByCode = async () => {
         if (!userProfile || !joinCode) return;
         setJoining(true);
         try {
-            const groupId = await FirestoreService.joinGroupByInviteCode(joinCode, { uid: userProfile.uid, email: userProfile.email || 'guest' });
-            if (groupId) { alert('Joined!'); setJoinCode(''); } else { alert('Invalid code.'); }
+            const result = await FirestoreService.joinGroupByInviteCodeAndPassword(joinCode, '', { uid: userProfile.uid, email: userProfile.email || 'guest' });
+
+            if (result.success) {
+                alert('Joined!'); setJoinCode('');
+                setActiveTab('my_groups');
+                return;
+            }
+
+            if (result.error === 'Incorrect password') {
+                const pwd = prompt("Enter Group Password:");
+                if (!pwd) return;
+                const result2 = await FirestoreService.joinGroupByInviteCodeAndPassword(joinCode, pwd, { uid: userProfile.uid, email: userProfile.email || 'guest' });
+                if (result2.success) {
+                    alert('Joined!'); setJoinCode('');
+                    setActiveTab('my_groups');
+                } else {
+                    alert(result2.error);
+                }
+            } else {
+                alert(result.error || 'Invalid code.');
+            }
         } catch (e) { alert('Error joining.'); } finally { setJoining(false); }
     };
 
@@ -342,7 +371,7 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
                     )}
                 </>
             )}
-            {showCreate && <CreateGroupModal onClose={() => setShowCreate(false)} onCreate={handleCreateGroup} />}
+            {showCreate && <CreateGroupModal onClose={() => setShowCreate(false)} onCreate={handleCreateGroup} publicCount={groupCounts.publicCount} privateCount={groupCounts.privateCount} />}
         </div>
     );
 };

@@ -313,14 +313,22 @@ export const Toast = ({ message, onClose }: { message: string, onClose: () => vo
     return <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg z-50">{message}</div>
 }
 
-export const CreateGroupModal: React.FC<{ onClose: () => void, onCreate: (groupData: any) => void }> = ({ onClose, onCreate }) => {
+export const CreateGroupModal: React.FC<{ onClose: () => void, onCreate: (groupData: any) => void, publicCount?: number, privateCount?: number }> = ({ onClose, onCreate, publicCount = 0, privateCount = 0 }) => {
     const [name, setName] = useState('');
     const [topic, setTopic] = useState('General');
     const [type, setType] = useState<'Public' | 'Private'>('Public');
     const [password, setPassword] = useState('');
 
+    const publicLeft = 2 - publicCount;
+    const privateLeft = 3 - privateCount;
+    const isLimitReached = type === 'Public' ? publicLeft <= 0 : privateLeft <= 0;
+
     const handleCreate = () => {
         if (!name) return;
+        if (isLimitReached) {
+            alert(`You have reached the limit for ${type} groups.`);
+            return;
+        }
         if (type === 'Private' && !password) {
             alert("Password required for private groups");
             return;
@@ -349,13 +357,16 @@ export const CreateGroupModal: React.FC<{ onClose: () => void, onCreate: (groupD
                 </div>
                 <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1">TYPE</label>
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 mb-2">
                         {['Public', 'Private'].map(t => (
                             <button key={t} onClick={() => setType(t as any)} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${type === t ? 'bg-sky-600 text-white' : 'bg-gray-100 dark:bg-gray-800'}`}>
                                 {t}
                             </button>
                         ))}
                     </div>
+                    <p className={`text-xs font-bold ${isLimitReached ? 'text-red-500' : 'text-emerald-500'}`}>
+                        {type === 'Public' ? `Public groups left: ${publicLeft} out of 2` : `Private groups left: ${privateLeft} out of 3`}
+                    </p>
                 </div>
                 {type === 'Private' && (
                     <div>
@@ -363,7 +374,9 @@ export const CreateGroupModal: React.FC<{ onClose: () => void, onCreate: (groupD
                         <input type="password" className="w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-lg outline-none border border-sky-500/50" placeholder="Set Group Password" value={password} onChange={e => setPassword(e.target.value)} />
                     </div>
                 )}
-                <Button className="w-full mt-4" onClick={handleCreate}>Create Group</Button>
+                <Button className="w-full mt-4" onClick={handleCreate} disabled={isLimitReached}>
+                    {isLimitReached ? 'Limit Reached' : 'Create Group'}
+                </Button>
             </div>
         </Modal>
     );
