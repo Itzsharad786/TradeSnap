@@ -1,6 +1,4 @@
 
-export type Theme = 'dark' | 'light' | 'ocean' | 'forest' | 'sunset';
-
 export type Page = 'Home' | 'Market' | 'News' | 'Analyzer' | 'TraderLab' | 'Community' | 'Profile';
 
 export interface UserProfile {
@@ -17,8 +15,6 @@ export interface UserProfile {
   createdAt?: Date;
   lastLogin?: Date;
   onboardingCompleted: boolean;
-  theme: Theme;
-  themeColor?: string;
   groupsJoined?: string[];
   traderLabProgress?: {
     [topicId: string]: {

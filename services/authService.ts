@@ -30,8 +30,6 @@ const createDefaultProfile = (user: User, isGuest: boolean = false, email: strin
         isGuest: isGuest,
         createdAt: new Date(),
         lastLogin: new Date(),
-        theme: 'dark',
-        themeColor: '#0ea5e9',
         groupsJoined: [],
         traderLabProgress: {},
         stats: {

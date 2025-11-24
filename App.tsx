@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTheme, useLocalStorage } from './hooks';
+import { useLocalStorage } from './hooks';
 import { HomePage, MarketPage, NewsPage, AnalyzerPage, TraderLabPage, CommunityPage, ProfilePage } from './pages';
 import { Loader, TopNavBar, Icon, Footer } from './components';
 import type { UserProfile, Page } from './types';
@@ -10,7 +10,6 @@ import BullLogo from '@/components/bull-logo.png';
 
 // --- Main App Component ---
 export default function App() {
-    const { theme, toggleTheme } = useTheme();
     const [userProfile, setUserProfile] = useLocalStorage<UserProfile | null>('tradesnap_user_profile', null);
     const [page, setPage] = useState<Page>('Home');
 
@@ -23,32 +22,10 @@ export default function App() {
     const [error, setError] = useState('');
     const [magicLinkSent, setMagicLinkSent] = useState(false);
 
-    // Handle Theme Change
-    const handleSetTheme = (newTheme: any) => {
-        const root = window.document.documentElement;
-        root.classList.remove('light', 'dark', 'ocean', 'forest', 'sunset');
-        root.classList.add(newTheme);
-        if (userProfile) {
-            const updated = { ...userProfile, theme: newTheme };
-            setUserProfile(updated);
-            FirestoreService.createOrUpdateUserProfile(updated);
-        }
-    };
-
     const handleUpdateProfile = (newProfile: UserProfile) => {
         setUserProfile(newProfile);
         FirestoreService.createOrUpdateUserProfile(newProfile);
     };
-
-    useEffect(() => {
-        if (userProfile?.theme) handleSetTheme(userProfile.theme);
-    }, [userProfile?.theme]);
-
-    // Update Global Theme Color Variable
-    useEffect(() => {
-        const color = userProfile?.themeColor || '#0ea5e9';
-        document.documentElement.style.setProperty('--theme-color', color);
-    }, [userProfile?.themeColor]);
 
     const [targetGroupId, setTargetGroupId] = useState<string | undefined>(undefined);
     const [viewProfileUid, setViewProfileUid] = useState<string | null>(null);
@@ -94,7 +71,6 @@ export default function App() {
             const session = await AuthService.checkSession();
             if (session) {
                 setUserProfile(session);
-                if (session.theme) handleSetTheme(session.theme);
             }
         };
         init();
@@ -248,7 +224,7 @@ export default function App() {
     // Render Main App
     return (
         <div className={`min-h-screen bg-gray-50 dark:bg-[#0a0e1a] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 flex flex-col`}>
-            <TopNavBar page={page} setPage={setPage} theme={userProfile?.theme || 'dark'} setTheme={handleSetTheme} themeColor={userProfile?.themeColor} />
+            <TopNavBar page={page} setPage={setPage} />
             <main className="pt-20 px-4 max-w-7xl mx-auto w-full flex-grow">
                 <AnimatePresence mode="wait">
                     <motion.div key={page} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>

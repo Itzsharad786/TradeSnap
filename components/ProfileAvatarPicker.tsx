@@ -34,36 +34,26 @@ const PRESET_AVATARS = [
     preset16, preset17, preset18, preset19, preset20
 ];
 
-const DEFAULT_THEME_COLORS = [
-    '#0ea5e9', // Sky Blue
-    '#10b981', // Emerald
-    '#8b5cf6', // Purple
-    '#f59e0b', // Amber
-    '#ef4444', // Red
-    '#ec4899', // Pink
-];
+
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 interface ProfileAvatarPickerProps {
     userProfile: UserProfile;
     onAvatarChange: (avatarUrl: string) => Promise<void>;
-    onThemeColorChange: (color: string) => Promise<void>;
     onClose: () => void;
 }
 
 export const ProfileAvatarPicker: React.FC<ProfileAvatarPickerProps> = ({
     userProfile,
     onAvatarChange,
-    onThemeColorChange,
     onClose
 }) => {
-    const [activeTab, setActiveTab] = useState<'upload' | 'presets' | 'theme'>('upload');
+    const [activeTab, setActiveTab] = useState<'upload' | 'presets'>('upload');
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [customColor, setCustomColor] = useState(userProfile.themeColor || '#0ea5e9');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadTaskRef = useRef<any>(null);
 
@@ -160,27 +150,6 @@ export const ProfileAvatarPicker: React.FC<ProfileAvatarPickerProps> = ({
         }
     };
 
-    const handleThemeColorSelect = async (color: string) => {
-        try {
-            setCustomColor(color);
-            await onThemeColorChange(color);
-            // Update CSS variable immediately
-            document.documentElement.style.setProperty('--theme-color', color);
-        } catch (err) {
-            console.error('Error updating theme color:', err);
-            setError('Failed to update theme color. Please try again.');
-        }
-    };
-
-    const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const color = e.target.value;
-        setCustomColor(color);
-    };
-
-    const handleCustomColorApply = async () => {
-        await handleThemeColorSelect(customColor);
-    };
-
     return (
         <Modal onClose={onClose}>
             <div className="space-y-6">
@@ -205,15 +174,6 @@ export const ProfileAvatarPicker: React.FC<ProfileAvatarPickerProps> = ({
                             }`}
                     >
                         Presets
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('theme')}
-                        className={`px-6 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'theme'
-                            ? 'border-sky-500 text-sky-500'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                            }`}
-                    >
-                        Theme
                     </button>
                 </div>
 
@@ -350,98 +310,6 @@ export const ProfileAvatarPicker: React.FC<ProfileAvatarPickerProps> = ({
                                         )}
                                     </motion.button>
                                 ))}
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {activeTab === 'theme' && (
-                        <motion.div
-                            key="theme"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                            className="space-y-6"
-                        >
-                            {/* Default Colors */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
-                                    Preset Colors
-                                </label>
-                                <div className="flex gap-3 flex-wrap">
-                                    {DEFAULT_THEME_COLORS.map((color) => (
-                                        <motion.button
-                                            key={color}
-                                            onClick={() => handleThemeColorSelect(color)}
-                                            whileHover={{ scale: 1.2 }}
-                                            whileTap={{ scale: 0.9 }}
-                                            className={`w-12 h-12 rounded-full relative transition-all ${userProfile.themeColor === color
-                                                ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0a0e1a]'
-                                                : 'hover:ring-2 hover:ring-gray-300'
-                                                }`}
-                                            style={{ backgroundColor: color }}
-                                            aria-label={`Select ${color} theme`}
-                                        >
-                                            {userProfile.themeColor === color && (
-                                                <motion.div
-                                                    layoutId="activeThemeColor"
-                                                    className="absolute inset-0 rounded-full bg-white/30"
-                                                />
-                                            )}
-                                        </motion.button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Custom Color Picker */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
-                                    Custom Color
-                                </label>
-                                <div className="flex gap-3 items-center">
-                                    <div className="relative">
-                                        <input
-                                            type="color"
-                                            value={customColor}
-                                            onChange={handleCustomColorChange}
-                                            className="w-16 h-16 rounded-lg cursor-pointer border-2 border-gray-300 dark:border-gray-700"
-                                            aria-label="Pick custom color"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <input
-                                            type="text"
-                                            value={customColor}
-                                            onChange={(e) => setCustomColor(e.target.value)}
-                                            placeholder="#0ea5e9"
-                                            className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg font-mono text-sm"
-                                        />
-                                    </div>
-                                    <Button onClick={handleCustomColorApply}>
-                                        Apply
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Preview */}
-                            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-                                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                                    Preview
-                                </div>
-                                <div className="flex gap-3">
-                                    <button
-                                        className="px-6 py-3 rounded-lg text-white font-medium shadow-lg transition-all hover:opacity-90"
-                                        style={{ backgroundColor: customColor }}
-                                    >
-                                        Sample Button
-                                    </button>
-                                    <div
-                                        className="w-12 h-12 rounded-full"
-                                        style={{
-                                            backgroundColor: customColor,
-                                            boxShadow: `0 0 20px ${customColor}40`
-                                        }}
-                                    />
-                                </div>
                             </div>
                         </motion.div>
                     )}

@@ -558,20 +558,6 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
         setSaving(false);
     };
 
-    const handleThemeChange = async (color: string) => {
-        if (!isOwnProfile || !displayProfile) return;
-
-        // 1. Optimistic UI Update
-        const updated = { ...displayProfile, themeColor: color };
-        setDisplayProfile(updated);
-
-        // 2. Update Global App State (for Navbar etc)
-        onProfileUpdate(updated);
-
-        // 3. Persist to Firestore
-        await FirestoreService.createOrUpdateUserProfile(updated);
-    };
-
     const stats = [
         { label: 'Total Trades', value: '1,245', icon: 'trend', color: 'text-emerald-400' },
         { label: 'Win Rate', value: '68%', icon: 'chart', color: 'text-blue-400' },
@@ -655,19 +641,13 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
                     {/* Settings Form (Only if Own Profile) */}
                     {isOwnProfile ? (
                         <div className="space-y-8 bg-black/20 rounded-2xl p-8 border border-white/5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Display Name</label>
-                                    <input
-                                        value={editName}
-                                        onChange={e => setEditName(e.target.value)}
-                                        className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Theme Color</label>
-                                    <ThemePicker current={displayProfile.themeColor || '#0ea5e9'} onChange={handleThemeChange} />
-                                </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Display Name</label>
+                                <input
+                                    value={editName}
+                                    onChange={e => setEditName(e.target.value)}
+                                    className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all"
+                                />
                             </div>
 
                             <div className="space-y-2">
@@ -708,7 +688,7 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
                 </div>
             </motion.div>
 
-            {/* Avatar & Theme Picker Modal */}
+            {/* Avatar Picker Modal */}
             {showAvatarPicker && displayProfile && (
                 <ProfileAvatarPicker
                     userProfile={displayProfile}
@@ -718,7 +698,6 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
                         onProfileUpdate(updated);
                         await FirestoreService.createOrUpdateUserProfile(updated);
                     }}
-                    onThemeColorChange={handleThemeChange}
                     onClose={() => setShowAvatarPicker(false)}
                 />
             )}

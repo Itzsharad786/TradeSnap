@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { UserProfile, Group, NewsArticleWithImage, Page, Theme } from './types';
+import type { UserProfile, Group, NewsArticleWithImage, Page } from './types';
 import { PROFILE_AVATARS } from './types';
 import BullLogo from '@/components/bull-logo.png';
 
@@ -45,7 +45,7 @@ export const Icon = ({ name, className }: { name: string, className?: string }) 
     );
 };
 
-export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page: Page, setPage: (p: Page) => void, theme: Theme, setTheme: (t: Theme) => void, themeColor?: string }) => {
+export const TopNavBar = ({ page, setPage }: { page: Page, setPage: (p: Page) => void }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
@@ -71,8 +71,7 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
             style={{
                 backdropFilter: 'blur(12px)',
                 WebkitBackdropFilter: 'blur(12px)',
-                background: scrolled ? 'rgba(10, 15, 25, 0.85)' : 'rgba(10, 15, 25, 0.55)',
-                ...(themeColor ? { borderBottomColor: `${themeColor}20` } : {})
+                background: scrolled ? 'rgba(10, 15, 25, 0.85)' : 'rgba(10, 15, 25, 0.55)'
             }}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -94,27 +93,18 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
                                 key={item.name}
                                 onClick={() => setPage(item.name)}
                                 className={`relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 group ${page === item.name ? 'text-sky-400 bg-white/5' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                                style={page === item.name && themeColor ? { color: themeColor } : undefined}
                             >
                                 <Icon name={item.icon} className={`h-4 w-4 transition-all duration-300 ${page === item.name ? 'drop-shadow-[0_0_5px_rgba(14,165,233,0.5)]' : 'group-hover:text-sky-400 group-hover:drop-shadow-[0_0_5px_rgba(14,165,233,0.5)]'}`} />
                                 {item.label}
                                 {page === item.name && (
                                     <motion.div
                                         layoutId="navbar-indicator"
-                                        className="absolute bottom-0 left-0 right-0 h-[2px] shadow-[0_0_10px_rgba(14,165,233,0.8)] rounded-full"
-                                        style={{ backgroundColor: 'var(--theme-color)', boxShadow: `0 0 10px var(--theme-color)` }}
+                                        className="absolute bottom-0 left-0 right-0 h-[2px] shadow-[0_0_10px_rgba(14,165,233,0.8)] rounded-full bg-sky-500 shadow-sky-500/50"
                                     />
                                 )}
                             </button>
                         ))}
                         <div className="h-6 w-px bg-white/10 mx-3" />
-
-                        <button
-                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                            className="p-2 hover:bg-white/5 rounded-full transition-colors group"
-                        >
-                            <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="h-5 w-5 text-gray-400 group-hover:text-yellow-400 transition-colors" />
-                        </button>
 
                         <button onClick={() => setPage('Profile')} className="ml-2 p-1 hover:bg-white/5 rounded-full transition-colors">
                             <Icon name="profile" className="h-6 w-6 text-gray-400 hover:text-sky-400 transition-colors" />
@@ -123,9 +113,6 @@ export const TopNavBar = ({ page, setPage, theme, setTheme, themeColor }: { page
 
                     {/* Mobile Menu Button */}
                     <div className="lg:hidden flex items-center gap-4">
-                        <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="text-gray-400">
-                            <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="h-5 w-5" />
-                        </button>
                         <button onClick={() => setIsOpen(!isOpen)} className="text-gray-400">
                             <Icon name={isOpen ? "close" : "menu"} />
                         </button>
@@ -194,13 +181,11 @@ export const Card: React.FC<React.PropsWithChildren<{ className?: string; onClic
 
 export const Button: React.FC<React.PropsWithChildren<{ onClick?: any; className?: string; disabled?: boolean; variant?: 'primary' | 'secondary' | 'outline' | 'danger'; style?: React.CSSProperties }>> = ({ children, onClick, className, disabled, variant = 'primary', style }) => {
     const variants = {
-        primary: 'text-white shadow-lg hover:opacity-90',
+        primary: 'bg-sky-500 text-white shadow-lg hover:bg-sky-400 shadow-sky-500/20',
         secondary: 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700',
         outline: 'border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800',
         danger: 'bg-red-600 text-white hover:bg-red-700 shadow-lg'
     };
-
-    const finalStyle = variant === 'primary' ? { backgroundColor: 'var(--theme-color)', ...style } : style;
 
     return (
         <motion.button
@@ -208,7 +193,7 @@ export const Button: React.FC<React.PropsWithChildren<{ onClick?: any; className
             onClick={onClick}
             disabled={disabled}
             className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
-            style={finalStyle}
+            style={style}
         >
             {children}
         </motion.button>
@@ -371,31 +356,6 @@ export const CreateGroupModal: React.FC<{ onClose: () => void, onCreate: (groupD
                 <Button className="w-full mt-4" onClick={handleCreate}>Create Group</Button>
             </div>
         </Modal>
-    );
-};
-
-export const ThemePicker = ({ current, onChange }: { current: string, onChange: (color: string) => void }) => {
-    const colors = ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#ec4899'];
-    return (
-        <div className="flex gap-3 flex-wrap">
-            {colors.map(color => (
-                <motion.button
-                    key={color}
-                    onClick={() => onChange(color)}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    className={`w-10 h-10 rounded-full relative ${current === color ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0a0e1a]' : ''}`}
-                    style={{ backgroundColor: color }}
-                >
-                    {current === color && (
-                        <motion.div
-                            layoutId="activeColor"
-                            className="absolute inset-0 rounded-full bg-white/30"
-                        />
-                    )}
-                </motion.button>
-            ))}
-        </div>
     );
 };
 
