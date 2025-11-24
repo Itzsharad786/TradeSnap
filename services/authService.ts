@@ -5,9 +5,7 @@ import {
     onAuthStateChanged,
     User,
     signInAnonymously,
-    sendSignInLinkToEmail,
-    isSignInWithEmailLink,
-    signInWithEmailLink
+    sendPasswordResetEmail
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase/index";
@@ -89,39 +87,14 @@ export const loginAsGuest = async (): Promise<UserProfile> => {
     }
 };
 
-// --- Email Link Login ---
-export const sendMagicLink = async (email: string) => {
-    const actionCodeSettings = {
-        url: window.location.origin, // Redirect back to home
-        handleCodeInApp: true,
-    };
+// --- Password Reset ---
+export const resetPassword = async (email: string): Promise<void> => {
     try {
-        await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-        window.localStorage.setItem('emailForSignIn', email);
+        await sendPasswordResetEmail(auth, email);
     } catch (error: any) {
-        console.error('Send link error:', error);
+        console.error('Password reset error:', error);
         throw new Error(mapAuthError(error.code));
     }
-};
-
-export const completeMagicLinkLogin = async (): Promise<UserProfile | null> => {
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-        let email = window.localStorage.getItem('emailForSignIn');
-        if (!email) {
-            email = window.prompt('Please provide your email for confirmation');
-        }
-        if (!email) return null;
-
-        try {
-            const result = await signInWithEmailLink(auth, email, window.location.href);
-            window.localStorage.removeItem('emailForSignIn');
-            return await handleUserLogin(result.user);
-        } catch (error: any) {
-            console.error('Link login error:', error);
-            throw new Error(mapAuthError(error.code));
-        }
-    }
-    return null;
 };
 
 // --- Common Login Handler ---

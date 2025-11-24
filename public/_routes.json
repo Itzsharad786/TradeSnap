@@ -1,0 +1,15 @@
+{
+    "version": 1,
+    "include": [
+        "/*"
+    ],
+    "exclude": [
+        "/assets/*",
+        "/avatars/*",
+        "/*.png",
+        "/*.ico",
+        "/*.svg",
+        "/*.json"
+    ],
+    "fallback": "/index.html"
+}
