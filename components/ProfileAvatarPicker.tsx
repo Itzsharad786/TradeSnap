@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { storage } from '../firebase';
+import { storage } from '../firebase/index';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Icon, Button, Modal } from '../components';
 import type { UserProfile } from '../types';
@@ -191,8 +191,8 @@ export const ProfileAvatarPicker: React.FC<ProfileAvatarPickerProps> = ({
                     <button
                         onClick={() => setActiveTab('upload')}
                         className={`px-6 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'upload'
-                                ? 'border-sky-500 text-sky-500'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'border-sky-500 text-sky-500'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                     >
                         Upload
@@ -200,8 +200,8 @@ export const ProfileAvatarPicker: React.FC<ProfileAvatarPickerProps> = ({
                     <button
                         onClick={() => setActiveTab('presets')}
                         className={`px-6 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'presets'
-                                ? 'border-sky-500 text-sky-500'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'border-sky-500 text-sky-500'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                     >
                         Presets
@@ -209,8 +209,8 @@ export const ProfileAvatarPicker: React.FC<ProfileAvatarPickerProps> = ({
                     <button
                         onClick={() => setActiveTab('theme')}
                         className={`px-6 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'theme'
-                                ? 'border-sky-500 text-sky-500'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            ? 'border-sky-500 text-sky-500'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                     >
                         Theme
@@ -334,8 +334,8 @@ export const ProfileAvatarPicker: React.FC<ProfileAvatarPickerProps> = ({
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.95 }}
                                         className={`relative aspect-square rounded-full overflow-hidden border-2 transition-all ${userProfile.avatar === preset
-                                                ? 'border-sky-500 ring-2 ring-sky-500 ring-offset-2 ring-offset-white dark:ring-offset-[#111625]'
-                                                : 'border-gray-200 dark:border-gray-700 hover:border-sky-400'
+                                            ? 'border-sky-500 ring-2 ring-sky-500 ring-offset-2 ring-offset-white dark:ring-offset-[#111625]'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-sky-400'
                                             }`}
                                     >
                                         <img
@@ -375,8 +375,8 @@ export const ProfileAvatarPicker: React.FC<ProfileAvatarPickerProps> = ({
                                             whileHover={{ scale: 1.2 }}
                                             whileTap={{ scale: 0.9 }}
                                             className={`w-12 h-12 rounded-full relative transition-all ${userProfile.themeColor === color
-                                                    ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0a0e1a]'
-                                                    : 'hover:ring-2 hover:ring-gray-300'
+                                                ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0a0e1a]'
+                                                : 'hover:ring-2 hover:ring-gray-300'
                                                 }`}
                                             style={{ backgroundColor: color }}
                                             aria-label={`Select ${color} theme`}

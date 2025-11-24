@@ -1,4 +1,15 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from './firebase/index';
+import * as FirestoreService from './services/firestoreService';
+import * as AiService from './services/geminiService';
+import { fetchNews } from './services/newsService';
+import HyperspeedBG from './components/HyperspeedBG';
+import { Icon, Button, Card, Avatar, Modal, Loader, ThemePicker, NewsCard, Tabs, CreateGroupModal, GuestPromptModal, Toast } from './components';
+import { ProfileAvatarPicker } from './components/ProfileAvatarPicker';
+import type { UserProfile, Page, Group, GroupChatMessage, TraderLabTopic, NewsArticleWithImage } from './types';
+import TOPICS_DATA from './topics.json';
 
 // --- STORAGE HELPER (Inlined for portability) ---
 const uploadGroupImage = async (file: File, path: string): Promise<string> => {
