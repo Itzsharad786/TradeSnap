@@ -249,20 +249,30 @@ export const NewsCard: React.FC<{ article: NewsArticleWithImage, onReadMore: (li
 };
 
 export const Avatar = ({ avatar, className = "h-10 w-10" }: { avatar: string, className?: string }) => {
-    const [error, setError] = useState(false);
-    const isBase64 = avatar.startsWith('data:');
-    const src = isBase64 ? avatar : (PROFILE_AVATARS[avatar] || avatar);
+    const [imgSrc, setImgSrc] = useState<string>('');
 
-    if (error || !src) {
+    useEffect(() => {
+        const isBase64 = avatar?.startsWith('data:');
+        const src = isBase64 ? avatar : (PROFILE_AVATARS[avatar] || avatar);
+        setImgSrc(src);
+    }, [avatar]);
+
+    const handleError = () => {
+        if (imgSrc !== '/avatars/fallback-bull-logo.svg') {
+            setImgSrc('/avatars/fallback-bull-logo.svg');
+        }
+    };
+
+    if (!imgSrc) {
         return <div className={`bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center ${className}`}><Icon name="profile" className="opacity-50" /></div>
     }
 
     return (
         <img
-            src={src}
+            src={imgSrc}
             alt="Avatar"
             className={`rounded-full object-cover bg-gray-100 dark:bg-gray-800 ${className}`}
-            onError={() => setError(true)}
+            onError={handleError}
         />
     );
 };
