@@ -12,6 +12,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase/index";
 import type { UserProfile } from "../types";
+import preset01 from '../components/profile-presets/preset-01.png';
 
 // --- Helper: Create Default Profile ---
 const createDefaultProfile = (user: User, isGuest: boolean = false, email: string = ''): UserProfile => {
@@ -22,7 +23,7 @@ const createDefaultProfile = (user: User, isGuest: boolean = false, email: strin
         displayName: isGuest ? 'Guest' : username,
         username: isGuest ? `guest_${Math.floor(Math.random() * 10000)}` : username.replace(/[^a-zA-Z0-9]/g, ''),
         email: email || '',
-        avatar: 'trader-1',
+        avatar: preset01,
         bio: isGuest ? 'Just visiting.' : '',
         country: 'US',
         experience: 'Beginner',
