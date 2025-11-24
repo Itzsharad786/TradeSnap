@@ -86,6 +86,11 @@ const hashPassword = async (password: string): Promise<string> => {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
+const verifyPassword = async (password: string, hash: string): Promise<boolean> => {
+    const inputHash = await hashPassword(password);
+    return inputHash === hash;
+};
+
 export const createGroup = async (groupData: {
     name: string;
     description: string;
@@ -119,7 +124,7 @@ export const createGroup = async (groupData: {
             passwordHash = await hashPassword(groupData.password);
         }
 
-        const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const inviteCode = generateInviteCode();
 
         const initialMember = {
             uid: groupData.ownerUid,
@@ -335,3 +340,86 @@ export const joinGroupByInviteCode = async (inviteCode: string, user: { uid: str
 
     return groupId;
 };
+
+// Helper function to generate invite code
+export const generateInviteCode = (): string => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'TRD-';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+};
+
+// Get user's group counts
+export const getUserGroupCounts = async (userId: string): Promise<{ publicCount: number, privateCount: number }> => {
+    try {
+        const q = query(collection(db, "groups"), where("ownerUid", "==", userId));
+        const snapshot = await getDocs(q);
+        const userGroups = snapshot.docs.map(doc => doc.data());
+
+        const publicCount = userGroups.filter(g => g.type === 'public' || (!g.type && !g.isPrivate)).length;
+        const privateCount = userGroups.filter(g => g.type === 'private' || (!g.type && g.isPrivate)).length;
+
+        return { publicCount, privateCount };
+    } catch (error) {
+        console.error("Error getting user group counts:", error);
+        return { publicCount: 0, privateCount: 0 };
+    }
+};
+
+// Join group by invite code with password verification
+export const joinGroupByInviteCodeAndPassword = async (
+    inviteCode: string,
+    password: string,
+    user: { uid: string, email: string, username?: string, avatar?: string }
+): Promise<{ success: boolean, groupId?: string, error?: string }> => {
+    try {
+        // Find group by invite code
+        const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode), limit(1));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            return { success: false, error: "Invalid invite code" };
+        }
+
+        const groupDoc = snapshot.docs[0];
+        const groupData = groupDoc.data();
+        const groupId = groupDoc.id;
+
+        // Check if already a member
+        if (groupData.membersUidList?.includes(user.uid)) {
+            return { success: true, groupId, error: "Already a member" };
+        }
+
+        // Verify password for private groups
+        if (groupData.isPrivate && groupData.password) {
+            const isValid = await verifyPassword(password, groupData.password);
+            if (!isValid) {
+                return { success: false, error: "Incorrect password" };
+            }
+        }
+
+        // Add user to group
+        const memberData = {
+            uid: user.uid,
+            email: user.email,
+            username: user.username || user.email?.split('@')[0] || 'User',
+            avatar: user.avatar || 'default',
+            joinedAt: new Date().toISOString(),
+            isOnline: true,
+            lastSeen: serverTimestamp()
+        };
+
+        await updateDoc(doc(db, "groups", groupId), {
+            members: arrayUnion(memberData),
+            membersUidList: arrayUnion(user.uid)
+        });
+
+        return { success: true, groupId };
+    } catch (error) {
+        console.error("Error joining group:", error);
+        return { success: false, error: "Failed to join group" };
+    }
+};
+

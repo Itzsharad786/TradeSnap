@@ -78,12 +78,18 @@ export interface GroupChatMessage {
   reactions: { [key: string]: any };
   type: 'text' | 'image';
   mediaUrl?: string;
+  seenBy?: string[]; // Array of user IDs who have seen the message
+  isPinned?: boolean; // Whether message is pinned
 }
 
 export interface GroupMember {
   uid: string;
   email: string;
   joinedAt: string;
+  username?: string;
+  avatar?: string;
+  isOnline?: boolean;
+  lastSeen?: any;
 }
 
 export interface Group {
@@ -91,16 +97,17 @@ export interface Group {
   name: string;
   description: string;
   avatarUrl: string | null;
+  bannerUrl?: string | null; // Group banner image
   isPrivate: boolean;
   password?: string | null;
   ownerUid: string;
   ownerEmail: string;
   inviteCode: string;
   members: GroupMember[];
+  membersUidList?: string[]; // For faster queries
   createdAt: any;
   type: 'public' | 'private'; // Enforced type
   topic?: string;
-  bannerUrl?: string;
   lastMessage?: {
     text: string;
     timestamp: any;
