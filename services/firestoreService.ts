@@ -76,6 +76,8 @@ export const createOrUpdateUserProfile = async (profileData: UserProfile): Promi
 
 // --- Group Functions ---
 
+// --- Group Functions ---
+
 // Simple client-side hash for password (in a real app, use a server function)
 const hashPassword = async (password: string): Promise<string> => {
     const msgBuffer = new TextEncoder().encode(password);
@@ -90,11 +92,27 @@ export const createGroup = async (groupData: {
     ownerUid: string;
     ownerEmail: string;
     isPrivate: boolean;
+    type: 'public' | 'private';
     password?: string;
     avatarUrl?: string;
 }): Promise<string> => {
     try {
         const collectionRef = collection(db, "groups");
+
+        // Check Limits
+        const q = query(collectionRef, where("ownerUid", "==", groupData.ownerUid));
+        const snapshot = await getDocs(q);
+        const userGroups = snapshot.docs.map(doc => doc.data());
+
+        const publicCount = userGroups.filter(g => g.type === 'public' || (!g.type && !g.isPrivate)).length;
+        const privateCount = userGroups.filter(g => g.type === 'private' || (!g.type && g.isPrivate)).length;
+
+        if (groupData.type === 'public' && publicCount >= 2) {
+            throw new Error("You have reached the limit of 2 Public Groups.");
+        }
+        if (groupData.type === 'private' && privateCount >= 3) {
+            throw new Error("You have reached the limit of 3 Private Groups.");
+        }
 
         let passwordHash = null;
         if (groupData.isPrivate && groupData.password) {
@@ -106,7 +124,7 @@ export const createGroup = async (groupData: {
         const initialMember = {
             uid: groupData.ownerUid,
             email: groupData.ownerEmail,
-            joinedAt: new Date().toISOString(), // Store as string for easier UI handling, or use serverTimestamp if preferred for sorting
+            joinedAt: new Date().toISOString(),
             role: 'owner'
         };
 
@@ -115,17 +133,27 @@ export const createGroup = async (groupData: {
             description: groupData.description || "",
             avatarUrl: groupData.avatarUrl || null,
             isPrivate: groupData.isPrivate ?? false,
-            password: passwordHash, // Store hash
+            type: groupData.type,
+            password: passwordHash,
             ownerUid: groupData.ownerUid,
             ownerEmail: groupData.ownerEmail,
             members: [initialMember],
-            membersUidList: [groupData.ownerUid], // For efficient querying and security rules
+            membersUidList: [groupData.ownerUid],
             inviteCode: inviteCode,
             createdAt: serverTimestamp(),
         };
 
         const sanitized = sanitizeData(safeData);
         const docRef = await addDoc(collectionRef, sanitized);
+
+        // Update user's group count
+        const userRef = doc(db, "users", groupData.ownerUid);
+        const countField = groupData.type === 'public' ? 'publicGroupsCount' : 'privateGroupsCount';
+        const currentCount = (groupData.type === 'public' ? publicCount : privateCount);
+        await updateDoc(userRef, {
+            [countField]: currentCount + 1
+        });
+
         return docRef.id;
     } catch (error) {
         console.error("Error creating group:", error);
@@ -139,7 +167,34 @@ export const updateGroup = async (groupId: string, data: any) => {
 };
 
 export const deleteGroup = async (groupId: string) => {
-    await deleteDoc(doc(db, "groups", groupId));
+    // Get group data first to know the type and owner
+    const groupRef = doc(db, "groups", groupId);
+    const groupSnap = await getDoc(groupRef);
+
+    if (groupSnap.exists()) {
+        const groupData = groupSnap.data();
+        const groupType = groupData.type || (groupData.isPrivate ? 'private' : 'public');
+        const ownerUid = groupData.ownerUid;
+
+        // Delete the group
+        await deleteDoc(groupRef);
+
+        // Decrement user's group count
+        if (ownerUid) {
+            const userRef = doc(db, "users", ownerUid);
+            const countField = groupType === 'public' ? 'publicGroupsCount' : 'privateGroupsCount';
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const currentCount = userSnap.data()[countField] || 0;
+                if (currentCount > 0) {
+                    await updateDoc(userRef, {
+                        [countField]: currentCount - 1
+                    });
+                }
+            }
+        }
+    }
 };
 
 export const joinGroup = async (groupId: string, user: { uid: string, email: string }, password?: string): Promise<boolean> => {
@@ -158,9 +213,8 @@ export const joinGroup = async (groupId: string, user: { uid: string, email: str
         }
     }
 
-    // Check if already member
     if (groupData.membersUidList?.includes(user.uid)) {
-        return true; // Already joined
+        return true;
     }
 
     const memberData = {
@@ -244,6 +298,16 @@ export const sendMessageToGroup = async (groupId: string, message: any) => {
         ...message,
         timestamp: serverTimestamp()
     });
+
+    // Update last message on group doc
+    const groupRef = doc(db, "groups", groupId);
+    await updateDoc(groupRef, {
+        lastMessage: {
+            text: message.type === 'image' ? 'Sent an image' : message.text,
+            timestamp: serverTimestamp(),
+            authorName: message.authorName
+        }
+    });
 };
 
 export const joinGroupByInviteCode = async (inviteCode: string, user: { uid: string, email: string }): Promise<string | null> => {
@@ -255,12 +319,6 @@ export const joinGroupByInviteCode = async (inviteCode: string, user: { uid: str
     const groupId = groupDoc.id;
     const groupData = groupDoc.data();
 
-    // If private, we can't bypass password unless invite code implies bypass? 
-    // Usually invite code implies bypass. Let's assume invite code allows join without password.
-    // But if the user specifically wants password for private groups even with invite code, we'd need to check.
-    // For now, let's allow join.
-
-    // Check if already member
     if (groupData.membersUidList?.includes(user.uid)) return groupId;
 
     const memberData = {

@@ -6,7 +6,7 @@ import * as FirestoreService from './services/firestoreService';
 import * as AiService from './services/geminiService';
 import { fetchNews } from './services/newsService';
 import HyperspeedBG from './components/HyperspeedBG';
-import { Icon, Button, Card, Avatar, Modal, Loader, ThemePicker, NewsCard, Tabs, CreateGroupModal, GuestPromptModal, Toast } from './components';
+import { Icon, Button, Card, Avatar, Modal, Loader, NewsCard, Tabs, CreateGroupModal, GuestPromptModal, Toast } from './components';
 import { ProfileAvatarPicker } from './components/ProfileAvatarPicker';
 import type { UserProfile, Page, Group, GroupChatMessage, TraderLabTopic, NewsArticleWithImage } from './types';
 import TOPICS_DATA from './topics.json';
@@ -519,6 +519,7 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+    const [joinedGroups, setJoinedGroups] = useState<Group[]>([]);
 
     // Determine which UID to show
     const targetUid = viewUid || (profile ? profile.uid : null);
@@ -534,6 +535,15 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
         const unsubscribe = FirestoreService.listenToUserProfile(targetUid, (fetchedProfile) => {
             setDisplayProfile(fetchedProfile);
             setLoading(false);
+        });
+        return () => unsubscribe();
+    }, [targetUid]);
+
+    // Listen for joined groups
+    useEffect(() => {
+        if (!targetUid) return;
+        const unsubscribe = FirestoreService.getGroupsForUser(targetUid, (groups) => {
+            setJoinedGroups(groups);
         });
         return () => unsubscribe();
     }, [targetUid]);
@@ -559,8 +569,8 @@ export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: stri
     };
 
     const stats = [
-        { label: 'Total Trades', value: '1,245', icon: 'trend', color: 'text-emerald-400' },
-        { label: 'Win Rate', value: '68%', icon: 'chart', color: 'text-blue-400' },
+        { label: 'Groups Joined', value: joinedGroups.length.toString(), icon: 'community', color: 'text-emerald-400' },
+        { label: 'Last Active', value: displayProfile?.lastActive ? new Date(displayProfile.lastActive).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never', icon: 'calendar', color: 'text-blue-400' },
         { label: 'Joined', value: displayProfile?.createdAt ? new Date(displayProfile.createdAt).toLocaleDateString() : 'Nov 2023', icon: 'calendar', color: 'text-purple-400' },
     ];
 

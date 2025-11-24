@@ -2,25 +2,54 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Users collection
     match /users/{userId} {
+      // Users can read and write their own profile
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Groups collection
     match /groups/{groupId} {
-      allow create: if request.auth != null;
-      // Public read allowed; private groups only readable by owner or members
-      allow read: if !resource.data.isPrivate || request.auth.uid == resource.data.ownerUid || (request.auth != null && request.auth.uid in resource.data.membersUidList);
-      allow update, delete: if request.auth.uid == resource.data.ownerUid;
-    }
+      // Anyone authenticated can read public groups
+      // Private groups only readable by owner or members
+      allow read: if request.auth != null && (
+        !resource.data.isPrivate || 
+        request.auth.uid == resource.data.ownerUid || 
+        request.auth.uid in resource.data.get('membersUidList', [])
+      );
 
-    match /groups/{groupId}/messages/{messageId} {
-      // Messages readable publicly inside group read rules above; creation requires auth
-      allow read: if exists(/databases/$(database)/documents/groups/$(groupId)) ? (
-          let g = get(/databases/$(database)/documents/groups/$(groupId)).data;
-          (!g.isPrivate) || (request.auth != null && (request.auth.uid == g.ownerUid || request.auth.uid in g.membersUidList))
-      ) : false;
-      allow create: if request.auth != null;
-      allow delete: if false; // only owner can delete groups, messages should not be deletable by regular users
+      // Create: authenticated users only
+      allow create: if request.auth != null && 
+        !request.auth.token.get('isGuest', false) &&
+        request.resource.data.ownerUid == request.auth.uid;
+
+      // Update: only owner can update
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.ownerUid &&
+        request.resource.data.ownerUid == resource.data.ownerUid;
+
+      // Delete: only owner can delete, not guests
+      allow delete: if request.auth != null && 
+        !request.auth.token.get('isGuest', false) &&
+        request.auth.uid == resource.data.ownerUid;
+
+      // Group messages subcollection
+      match /messages/{messageId} {
+        // Read messages if user can read the parent group
+        allow read: if request.auth != null && (
+          !get(/databases/$(database)/documents/groups/$(groupId)).data.isPrivate || 
+          request.auth.uid == get(/databases/$(database)/documents/groups/$(groupId)).data.ownerUid || 
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.get('membersUidList', [])
+        );
+
+        // Create: only group members can send messages
+        allow create: if request.auth != null && 
+          request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.get('membersUidList', []) &&
+          request.resource.data.authorId == request.auth.uid;
+
+        // Messages cannot be updated or deleted
+        allow update, delete: if false;
+      }
     }
   }
 }

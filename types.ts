@@ -13,7 +13,9 @@ export interface UserProfile {
   experience: 'Beginner' | 'Intermediate' | 'Expert';
   isGuest?: boolean;
   createdAt?: Date;
-  lastLogin?: Date;
+  lastActive?: Date; // Added
+  publicGroupsCount?: number; // Track public groups created
+  privateGroupsCount?: number; // Track private groups created
   onboardingCompleted: boolean;
   groupsJoined?: string[];
   traderLabProgress?: {
@@ -88,17 +90,22 @@ export interface Group {
   id: string;
   name: string;
   description: string;
-  avatarUrl: string | null; // Updated
+  avatarUrl: string | null;
   isPrivate: boolean;
   password?: string | null;
   ownerUid: string;
   ownerEmail: string;
   inviteCode: string;
-  members: GroupMember[]; // Updated
+  members: GroupMember[];
   createdAt: any;
-  type?: string; // Legacy support
-  topic?: string; // Legacy support
+  type: 'public' | 'private'; // Enforced type
+  topic?: string;
   bannerUrl?: string;
+  lastMessage?: {
+    text: string;
+    timestamp: any;
+    authorName: string;
+  };
 }
 
 export interface NewsArticleWithImage {

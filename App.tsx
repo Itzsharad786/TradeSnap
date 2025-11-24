@@ -82,7 +82,10 @@ export default function App() {
         setIsLoading(true); setError('');
         try {
             const profile = await AuthService.loginWithEmailPassword(email, pass);
-            setUserProfile(profile);
+            // Update lastActive timestamp
+            const updatedProfile = { ...profile, lastActive: new Date() };
+            await FirestoreService.createOrUpdateUserProfile(updatedProfile);
+            setUserProfile(updatedProfile);
             setPage('Home');
         } catch (err: any) { setError(err.message || 'Login failed'); } finally { setIsLoading(false); }
     };
@@ -91,7 +94,10 @@ export default function App() {
         setIsLoading(true); setError('');
         try {
             const profile = await AuthService.signUpWithEmailPassword(email, pass);
-            setUserProfile(profile);
+            // Update lastActive timestamp
+            const updatedProfile = { ...profile, lastActive: new Date() };
+            await FirestoreService.createOrUpdateUserProfile(updatedProfile);
+            setUserProfile(updatedProfile);
             setPage('Home');
         } catch (err: any) { setError(err.message || 'Signup failed'); } finally { setIsLoading(false); }
     };
