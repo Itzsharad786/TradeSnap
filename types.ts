@@ -18,6 +18,8 @@ export interface UserProfile {
   privateGroupsCount?: number; // Track private groups created
   onboardingCompleted: boolean;
   groupsJoined?: string[];
+  instagramHandle?: string; // Instagram username
+  themeColor?: string; // User's theme color preference
   traderLabProgress?: {
     [topicId: string]: {
       completed: boolean;

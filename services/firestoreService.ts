@@ -18,7 +18,7 @@ import {
     deleteDoc
 } from "firebase/firestore";
 import { db } from './firebase';
-import type { UserProfile, Group, GroupChatMessage } from '../types';
+import type { UserProfile, Group, GroupChatMessage, GroupMember } from '../types';
 
 // Helper to remove undefined fields
 const sanitizeData = (data: any) => {
@@ -268,9 +268,9 @@ export const leaveGroup = async (groupId: string, user: { uid: string, email: st
     }
 };
 
-// Fetch Public Groups (isPrivate == false)
+// Fetch Public Groups (type == "public")
 export const getPublicGroups = (callback: (groups: Group[]) => void): Unsubscribe => {
-    const q = query(collection(db, "groups"), where("isPrivate", "==", false), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "groups"), where("type", "==", "public"), orderBy("createdAt", "desc"));
     return onSnapshot(q, (snapshot) => {
         const groups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
         callback(groups);
@@ -445,5 +445,49 @@ export const joinGroupByInviteCodeAndPassword = async (
     } catch (error) {
         console.error("Error joining group:", error);
         return { success: false, error: "Failed to join group" };
+    }
+};
+
+// Update group banner
+export const updateGroupBanner = async (groupId: string, bannerUrl: string): Promise<void> => {
+    const groupRef = doc(db, "groups", groupId);
+    await updateDoc(groupRef, { bannerUrl });
+};
+
+// Get member details with online status
+export const getGroupMembersWithDetails = async (groupId: string): Promise<GroupMember[]> => {
+    const groupRef = doc(db, "groups", groupId);
+    const groupSnap = await getDoc(groupRef);
+
+    if (!groupSnap.exists()) return [];
+
+    const groupData = groupSnap.data();
+    return groupData.members || [];
+};
+
+// Update user Instagram handle
+export const updateUserInstagram = async (uid: string, instagramHandle: string): Promise<void> => {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, { instagramHandle });
+};
+
+// Get last group creation date for user
+export const getLastGroupCreationDate = async (userId: string): Promise<Date | null> => {
+    try {
+        const q = query(
+            collection(db, "groups"),
+            where("ownerUid", "==", userId),
+            orderBy("createdAt", "desc"),
+            limit(1)
+        );
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) return null;
+
+        const lastGroup = snapshot.docs[0].data();
+        return lastGroup.createdAt?.toDate ? lastGroup.createdAt.toDate() : null;
+    } catch (error) {
+        console.error("Error getting last group creation date:", error);
+        return null;
     }
 };
