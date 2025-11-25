@@ -15,7 +15,9 @@ import {
     updateDoc,
     arrayUnion,
     arrayRemove,
-    deleteDoc
+    deleteDoc,
+    increment,
+    runTransaction
 } from "firebase/firestore";
 import { db } from './firebase';
 import type { UserProfile, Group, GroupChatMessage, GroupMember } from '../types';
@@ -74,6 +76,11 @@ export const createOrUpdateUserProfile = async (profileData: UserProfile): Promi
     await setDoc(docRef, finalData, { merge: true });
 };
 
+export const updateUserLastLogin = async (uid: string): Promise<void> => {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, { lastLogin: serverTimestamp() });
+};
+
 // --- Group Functions ---
 
 // Simple client-side hash for password (in a real app, use a server function)
@@ -128,7 +135,8 @@ export const createGroup = async (groupData: {
             uid: groupData.ownerUid,
             email: groupData.ownerEmail,
             joinedAt: new Date().toISOString(),
-            role: 'owner'
+            role: 'owner',
+            isOnline: true
         };
 
         const safeData = {
@@ -137,7 +145,8 @@ export const createGroup = async (groupData: {
             avatarUrl: groupData.avatarUrl || null,
             isPrivate: groupData.isPrivate ?? false,
             type: groupData.type,
-            password: passwordHash,
+            password: passwordHash, // Storing hash in password field for now
+            passwordHash: passwordHash,
             ownerUid: groupData.ownerUid,
             ownerEmail: groupData.ownerEmail,
             members: [initialMember],
@@ -200,9 +209,6 @@ export const deleteGroup = async (groupId: string) => {
                     });
                 }
             }
-
-            // Also remove from groupMembers for all members (optional but good for cleanup)
-            // For now, just owner's list or rely on read-time filtering
         }
     }
 };
@@ -231,7 +237,8 @@ export const joinGroup = async (groupId: string, user: { uid: string, email: str
         uid: user.uid,
         email: user.email,
         joinedAt: new Date().toISOString(),
-        role: 'member'
+        role: 'member',
+        isOnline: true
     };
 
     await Promise.all([
@@ -330,6 +337,16 @@ export const sendMessageToGroup = async (groupId: string, message: any) => {
     });
 };
 
+export const deleteMessage = async (groupId: string, messageId: string) => {
+    const messageRef = doc(db, "groups", groupId, "messages", messageId);
+    await deleteDoc(messageRef);
+};
+
+export const pinMessage = async (groupId: string, messageId: string, isPinned: boolean) => {
+    const messageRef = doc(db, "groups", groupId, "messages", messageId);
+    await updateDoc(messageRef, { isPinned });
+};
+
 export const joinGroupByInviteCode = async (inviteCode: string, user: { uid: string, email: string }): Promise<string | null> => {
     const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode), limit(1));
     const snapshot = await getDocs(q);
@@ -345,7 +362,8 @@ export const joinGroupByInviteCode = async (inviteCode: string, user: { uid: str
         uid: user.uid,
         email: user.email,
         joinedAt: new Date().toISOString(),
-        role: 'member'
+        role: 'member',
+        isOnline: true
     };
 
     await Promise.all([
@@ -490,4 +508,49 @@ export const getLastGroupCreationDate = async (userId: string): Promise<Date | n
         console.error("Error getting last group creation date:", error);
         return null;
     }
+};
+
+// Follow User
+export const followUser = async (currentUid: string, targetUid: string) => {
+    const currentUserRef = doc(db, "users", currentUid);
+    const targetUserRef = doc(db, "users", targetUid);
+
+    await runTransaction(db, async (transaction) => {
+        // Add to following subcollection
+        const followingRef = doc(db, "users", currentUid, "following", targetUid);
+        transaction.set(followingRef, { since: serverTimestamp() });
+
+        // Add to followers subcollection
+        const followersRef = doc(db, "users", targetUid, "followers", currentUid);
+        transaction.set(followersRef, { since: serverTimestamp() });
+
+        // Update counts
+        transaction.update(currentUserRef, { followingCount: increment(1) });
+        transaction.update(targetUserRef, { followersCount: increment(1) });
+    });
+};
+
+export const unfollowUser = async (currentUid: string, targetUid: string) => {
+    const currentUserRef = doc(db, "users", currentUid);
+    const targetUserRef = doc(db, "users", targetUid);
+
+    await runTransaction(db, async (transaction) => {
+        // Remove from following subcollection
+        const followingRef = doc(db, "users", currentUid, "following", targetUid);
+        transaction.delete(followingRef);
+
+        // Remove from followers subcollection
+        const followersRef = doc(db, "users", targetUid, "followers", currentUid);
+        transaction.delete(followersRef);
+
+        // Update counts
+        transaction.update(currentUserRef, { followingCount: increment(-1) });
+        transaction.update(targetUserRef, { followersCount: increment(-1) });
+    });
+};
+
+export const isFollowing = async (currentUid: string, targetUid: string): Promise<boolean> => {
+    const docRef = doc(db, "users", currentUid, "following", targetUid);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists();
 };

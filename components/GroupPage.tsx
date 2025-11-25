@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Icon, Button, Avatar, Modal, Loader, Tabs } from '../components';
+import { Icon, Button, Avatar, Modal, Loader, Tabs, Toast } from '../components';
 import * as FirestoreService from '../services/firestoreService';
 import * as StorageService from '../services/storageService';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from '../services/firebase';
 import type { Group, GroupChatMessage, UserProfile, GroupMember } from '../types';
-import QRCode from 'qrcode';
 
 interface GroupPageProps {
     group: Group;
@@ -20,8 +19,8 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
     const [uploading, setUploading] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [bannerUrl, setBannerUrl] = useState(group.bannerUrl || '');
-    const [qrCodeUrl, setQrCodeUrl] = useState('');
     const [members, setMembers] = useState<GroupMember[]>(group.members || []);
+    const [toastMsg, setToastMsg] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,18 +28,18 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
     const isMember = group.members?.some(m => m.uid === userProfile?.uid);
 
     const inviteLink = `https://tradesnap.pages.dev/join?code=${group.inviteCode}`;
-
-    // Generate QR Code
-    useEffect(() => {
-        QRCode.toDataURL(inviteLink, { width: 300, margin: 2 })
-            .then(setQrCodeUrl)
-            .catch(console.error);
-    }, [inviteLink]);
+    const shareText = `Join my trading group "${group.name}" on Tradesnap! Use code: ${group.inviteCode}`;
 
     // Load Messages
     useEffect(() => {
         const unsubscribe = FirestoreService.getGroupMessages(group.id, (msgs) => {
-            setMessages(msgs);
+            // Sort pinned messages to top
+            const sorted = [...msgs].sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return a.timestamp - b.timestamp;
+            });
+            setMessages(sorted);
         });
         return () => unsubscribe();
     }, [group.id]);
@@ -115,7 +114,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
 
             await FirestoreService.updateGroupBanner(group.id, url);
             setBannerUrl(url);
-            alert('Banner updated!');
+            setToastMsg('Banner updated!');
         } catch (e) {
             console.error(e);
             alert('Failed to upload banner');
@@ -126,18 +125,23 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
         if (!userProfile) return;
         if (group.isPrivate && !isOwner) {
             const pwd = prompt("Enter Group Password:");
-            if (pwd !== group.password) {
-                alert("Incorrect password");
-                return;
+            // Note: This is a client-side check against the hash if available, or server check
+            // For now, we use the service which handles it
+            const res = await FirestoreService.joinGroupByInviteCodeAndPassword(group.inviteCode, pwd || '', userProfile);
+            if (res.success) {
+                setToastMsg("Joined!");
+            } else {
+                alert(res.error || "Failed to join");
             }
+            return;
         }
 
         try {
             await FirestoreService.joinGroup(group.id, { uid: userProfile.uid, email: userProfile.email || 'guest' });
-            alert("Joined!");
+            setToastMsg("Joined!");
         } catch (e) {
             console.error(e);
-            alert("Failed to join. If this is a private group, ask the owner for an invite.");
+            alert("Failed to join.");
         }
     };
 
@@ -154,78 +158,96 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
 
     const copyToClipboard = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
-        alert(`${label} copied!`);
+        setToastMsg(`${label} copied — share it!`);
+    };
+
+    const handlePinMessage = async (msgId: string, isPinned: boolean) => {
+        if (!isOwner) return;
+        await FirestoreService.pinMessage(group.id, msgId, isPinned);
+    };
+
+    const handleDeleteMessage = async (msgId: string) => {
+        if (!isOwner) return;
+        if (!confirm("Delete this message?")) return;
+        await FirestoreService.deleteMessage(group.id, msgId);
+    };
+
+    const shareToSocial = (platform: 'whatsapp' | 'telegram' | 'instagram') => {
+        const text = encodeURIComponent(shareText + "\n" + inviteLink);
+        if (platform === 'whatsapp') {
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        } else if (platform === 'telegram') {
+            window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(shareText)}`, '_blank');
+        } else if (platform === 'instagram') {
+            copyToClipboard(shareText + "\n" + inviteLink, "Caption");
+            alert("Instagram doesn't support direct web sharing. Caption copied to clipboard!");
+        }
     };
 
     return (
-        <div className="h-[85vh] flex flex-col">
+        <div className="h-[85vh] flex flex-col relative">
+            {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg('')} />}
+
             {/* Banner */}
-            {bannerUrl && (
-                <div className="relative w-full h-48 mb-4 rounded-xl overflow-hidden">
+            <div className="relative w-full h-48 mb-4 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 group">
+                {bannerUrl ? (
                     <img src={bannerUrl} alt="Group Banner" className="w-full h-full object-cover" />
-                    {isOwner && (
-                        <button
-                            onClick={() => bannerInputRef.current?.click()}
-                            className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-sm transition-all"
-                        >
-                            <Icon name="upload" className="h-4 w-4" />
-                        </button>
-                    )}
-                    <input
-                        ref={bannerInputRef}
-                        type="file"
-                        hidden
-                        accept="image/*"
-                        onChange={handleBannerUpload}
-                    />
-                </div>
-            )}
-
-            {!bannerUrl && isOwner && (
-                <div
-                    onClick={() => bannerInputRef.current?.click()}
-                    className="w-full h-32 mb-4 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center cursor-pointer hover:border-sky-500 transition-colors"
-                >
-                    <div className="text-center text-gray-500">
-                        <Icon name="image" className="h-8 w-8 mx-auto mb-2" />
-                        <p className="text-sm">Click to upload group banner</p>
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <Icon name="image" className="h-12 w-12 opacity-20" />
                     </div>
-                    <input
-                        ref={bannerInputRef}
-                        type="file"
-                        hidden
-                        accept="image/*"
-                        onChange={handleBannerUpload}
-                    />
-                </div>
-            )}
+                )}
 
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-800">
-                <div className="flex items-center gap-3">
-                    <button onClick={onBack} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                        <Icon name="arrowLeft" className="h-5 w-5" />
+                {isOwner && (
+                    <button
+                        onClick={() => bannerInputRef.current?.click()}
+                        className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                    >
+                        <Icon name="upload" className="h-4 w-4" />
                     </button>
-                    <Avatar avatar={group.avatarUrl || 'community'} className="h-10 w-10 rounded-lg" />
+                )}
+                <input
+                    ref={bannerInputRef}
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleBannerUpload}
+                />
+
+                {/* Back Button Overlay */}
+                <button
+                    onClick={onBack}
+                    className="absolute top-4 left-4 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-sm transition-all"
+                >
+                    <Icon name="arrowLeft" className="h-5 w-5" />
+                </button>
+            </div>
+
+            {/* Header Info */}
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-800 px-2">
+                <div className="flex items-center gap-3">
+                    <Avatar avatar={group.avatarUrl || 'community'} className="h-12 w-12 rounded-xl border-2 border-white dark:border-gray-800 shadow-sm" />
                     <div>
                         <h2 className="font-bold text-xl flex items-center gap-2">
                             {group.name}
                             {group.isPrivate && <Icon name="lock" className="h-4 w-4 text-amber-500" />}
-                            {isOwner && (
-                                <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase rounded">
-                                    Owner
-                                </span>
-                            )}
                         </h2>
-                        <p className="text-xs text-gray-500">{group.members?.length || 0} members</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>{members.length} members</span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                            <span className="flex items-center gap-1">
+                                <Icon name="profile" className="h-3 w-3" />
+                                Owner: {members.find(m => m.uid === group.ownerUid)?.username || 'Unknown'}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <div className="flex gap-2">
                     {!isMember && (
-                        <Button onClick={handleJoin} className="bg-sky-600 text-white">Join Group</Button>
+                        <Button onClick={handleJoin} className="bg-sky-600 text-white shadow-sky-500/20">Join Group</Button>
                     )}
                     {isOwner && (
-                        <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-500">
+                        <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-500 transition-colors">
                             <Icon name="settings" />
                         </button>
                     )}
@@ -245,20 +267,29 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
             />
 
             {/* Content */}
-            <div className="flex-grow overflow-hidden relative mt-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800">
+            <div className="flex-grow overflow-hidden relative mt-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800">
                 {activeTab === 'chat' && (
                     <div className="h-full flex flex-col">
                         <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                            {messages.length === 0 && (
+                                <div className="text-center text-gray-400 py-10">
+                                    <p>No messages yet. Start the conversation!</p>
+                                </div>
+                            )}
                             {messages.map(msg => (
-                                <div key={msg.id} className={`flex gap-3 ${msg.authorId === userProfile?.uid ? 'flex-row-reverse' : ''}`}>
-                                    <Avatar avatar={msg.authorAvatar} className="h-8 w-8 mt-1" />
-                                    <div className={`max-w-[70%] ${msg.authorId === userProfile?.uid ? 'items-end' : 'items-start'} flex flex-col`}>
+                                <div key={msg.id} className={`flex gap-3 ${msg.authorId === userProfile?.uid ? 'flex-row-reverse' : ''} group/msg`}>
+                                    <Avatar avatar={msg.authorAvatar} className="h-8 w-8 mt-1 rounded-full" />
+                                    <div className={`max-w-[75%] ${msg.authorId === userProfile?.uid ? 'items-end' : 'items-start'} flex flex-col`}>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-xs font-bold text-gray-500">{msg.authorName}</span>
-                                            <span className="text-[10px] text-gray-400">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                                            {msg.isPinned && <Icon name="spark" className="h-3 w-3 text-amber-500" />}
+                                            <span className="text-[10px] text-gray-400">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
-                                        <div className={`p-3 rounded-2xl ${msg.authorId === userProfile?.uid ? 'bg-sky-500 text-white rounded-tr-none' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-tl-none'}`}>
-                                            {msg.type === 'text' && <p className="text-sm">{msg.text}</p>}
+                                        <div className={`p-3 rounded-2xl relative group-hover/msg:shadow-md transition-shadow ${msg.authorId === userProfile?.uid
+                                                ? 'bg-sky-500 text-white rounded-tr-none'
+                                                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-tl-none'
+                                            } ${msg.isPinned ? 'ring-2 ring-amber-500/50' : ''}`}>
+                                            {msg.type === 'text' && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
                                             {msg.type === 'image' && (
                                                 <img
                                                     src={msg.mediaUrl}
@@ -268,41 +299,33 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                                                 />
                                             )}
                                         </div>
+
+                                        {/* Message Actions */}
+                                        {isOwner && (
+                                            <div className="flex gap-2 mt-1 opacity-0 group-hover/msg:opacity-100 transition-opacity">
+                                                <button onClick={() => handlePinMessage(msg.id, !msg.isPinned)} className="text-[10px] text-gray-400 hover:text-amber-500">
+                                                    {msg.isPinned ? 'Unpin' : 'Pin'}
+                                                </button>
+                                                <button onClick={() => handleDeleteMessage(msg.id)} className="text-[10px] text-gray-400 hover:text-red-500">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
                         </div>
+
+                        {/* Input Area */}
                         {isMember ? (
                             <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex gap-2 items-center">
-                                <label className="p-2 text-gray-400 hover:text-sky-500 cursor-pointer transition-colors">
-                                    <Icon name="image" />
-                                    <input type="file" hidden accept="image/*" onChange={handleImageUpload} disabled={uploading} />
-                                </label>
-                                <input
-                                    value={msgText}
-                                    onChange={e => setMsgText(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-                                    placeholder="Type a message..."
-                                    className="flex-grow bg-gray-100 dark:bg-gray-800 border-0 rounded-full px-4 py-2 focus:ring-2 ring-sky-500 outline-none"
-                                />
-                                <Button onClick={handleSendMessage} disabled={!msgText.trim()} className="rounded-full w-10 h-10 p-0 flex items-center justify-center">
-                                    <Icon name="send" className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="p-4 text-center text-gray-500 bg-gray-100 dark:bg-gray-800">
-                                You must join this group to chat.
-                            </div>
-                        )}
-
-                        {/* Floating Share Media Button */}
-                        {isMember && (
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="absolute bottom-20 right-6 p-4 bg-sky-500 hover:bg-sky-600 text-white rounded-full shadow-lg transition-all hover:scale-110"
-                                disabled={uploading}
-                            >
-                                <Icon name="image" className="h-6 w-6" />
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="p-2 text-gray-400 hover:text-sky-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all"
+                                    disabled={uploading}
+                                >
+                                    <Icon name="upload" className="h-5 w-5" />
+                                </button>
                                 <input
                                     ref={fileInputRef}
                                     type="file"
@@ -310,17 +333,40 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                                     accept="image/*"
                                     onChange={handleImageUpload}
                                 />
-                            </button>
+
+                                <input
+                                    value={msgText}
+                                    onChange={e => setMsgText(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
+                                    placeholder="Type a message..."
+                                    className="flex-grow bg-gray-100 dark:bg-gray-800 border-0 rounded-full px-4 py-3 focus:ring-2 ring-sky-500 outline-none transition-all"
+                                />
+                                <Button
+                                    onClick={handleSendMessage}
+                                    disabled={!msgText.trim()}
+                                    className="rounded-full w-10 h-10 p-0 flex items-center justify-center shadow-none"
+                                >
+                                    <Icon name="send" className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="p-4 text-center text-gray-500 bg-gray-100 dark:bg-gray-800">
+                                <p className="text-sm">You must join this group to chat.</p>
+                                <Button onClick={handleJoin} className="mt-2 text-xs" variant="secondary">Join Now</Button>
+                            </div>
                         )}
                     </div>
                 )}
 
                 {activeTab === 'members' && (
                     <div className="p-4 overflow-y-auto h-full">
-                        <h3 className="font-bold mb-4">Members ({members.length})</h3>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold">Members</h3>
+                            <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">{members.length}</span>
+                        </div>
                         <div className="space-y-2">
                             {members.map((m, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <div key={i} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-sky-500/30 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
                                             <Avatar avatar={m.avatar || 'trader-1'} className="h-10 w-10 rounded-full" />
@@ -329,16 +375,19 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                                             )}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-sm">{m.username || m.email.split('@')[0]}</div>
-                                            <div className="text-xs text-gray-500">
-                                                {m.isOnline ? 'Online' : `Last seen ${m.lastSeen ? new Date(m.lastSeen.seconds * 1000).toLocaleDateString() : 'recently'}`}
+                                            <div className="font-bold text-sm flex items-center gap-2">
+                                                {m.username || m.email.split('@')[0]}
+                                                {m.uid === group.ownerUid && <Icon name="badge" className="h-3 w-3 text-amber-500" />}
                                             </div>
-                                            <div className="text-xs text-gray-400">Joined {new Date(m.joinedAt).toLocaleDateString()}</div>
+                                            <div className="text-xs text-gray-500">
+                                                {m.isOnline ? <span className="text-emerald-500 font-bold">Online</span> : `Last seen ${m.lastSeen ? new Date(m.lastSeen.seconds * 1000).toLocaleDateString() : 'recently'}`}
+                                            </div>
                                         </div>
                                     </div>
-                                    {m.uid === group.ownerUid && (
-                                        <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase rounded">Owner</span>
-                                    )}
+                                    <div className="text-right">
+                                        <div className="text-[10px] text-gray-400 font-mono">Joined</div>
+                                        <div className="text-xs font-medium">{new Date(m.joinedAt).toLocaleDateString()}</div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -346,39 +395,44 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                 )}
 
                 {activeTab === 'share' && (
-                    <div className="p-6 overflow-y-auto h-full flex flex-col items-center justify-center">
-                        <h3 className="text-2xl font-bold mb-6">Share Group</h3>
-
-                        {/* QR Code */}
-                        {qrCodeUrl && (
-                            <div className="mb-6 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-                                <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64" />
+                    <div className="p-6 overflow-y-auto h-full flex flex-col items-center">
+                        <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-700 text-center">
+                            <div className="w-20 h-20 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Icon name="community" className="h-10 w-10" />
                             </div>
-                        )}
 
-                        {/* Join Code */}
-                        <div className="mb-6 text-center">
-                            <p className="text-sm text-gray-500 mb-2">Join Code</p>
-                            <p className="text-3xl font-bold font-mono tracking-wider text-sky-500">{group.inviteCode}</p>
-                        </div>
+                            <h3 className="text-2xl font-bold mb-2">Invite Friends</h3>
+                            <p className="text-gray-500 mb-8">Share this code to let others join your group.</p>
 
-                        {/* Action Buttons */}
-                        <div className="space-y-3 w-full max-w-md">
+                            <div className="bg-gray-100 dark:bg-gray-900 rounded-xl p-4 mb-6 border border-gray-200 dark:border-gray-800">
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Join Code</p>
+                                <div className="text-4xl font-black font-mono tracking-widest text-sky-500 select-all">
+                                    {group.inviteCode}
+                                </div>
+                            </div>
+
                             <Button
                                 onClick={() => copyToClipboard(group.inviteCode, 'Code')}
-                                className="w-full bg-sky-500 hover:bg-sky-600 text-white"
+                                className="w-full py-4 text-lg mb-6 shadow-sky-500/20"
                             >
                                 <Icon name="copy" className="mr-2" />
                                 Copy Code
                             </Button>
-                            <Button
-                                onClick={() => copyToClipboard(inviteLink, 'Link')}
-                                variant="secondary"
-                                className="w-full"
-                            >
-                                <Icon name="link" className="mr-2" />
-                                Copy Full Link
-                            </Button>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <button onClick={() => shareToSocial('whatsapp')} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <div className="w-10 h-10 bg-[#25D366] rounded-full flex items-center justify-center text-white"><Icon name="send" className="h-5 w-5" /></div>
+                                    <span className="text-xs font-medium">WhatsApp</span>
+                                </button>
+                                <button onClick={() => shareToSocial('telegram')} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <div className="w-10 h-10 bg-[#0088cc] rounded-full flex items-center justify-center text-white"><Icon name="send" className="h-5 w-5" /></div>
+                                    <span className="text-xs font-medium">Telegram</span>
+                                </button>
+                                <button onClick={() => shareToSocial('instagram')} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <div className="w-10 h-10 bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] rounded-full flex items-center justify-center text-white"><Icon name="profile" className="h-5 w-5" /></div>
+                                    <span className="text-xs font-medium">Instagram</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -386,71 +440,47 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                 {activeTab === 'info' && (
                     <div className="p-6 overflow-y-auto h-full">
                         {/* Banner Preview */}
-                        {bannerUrl && (
-                            <div className="mb-6">
-                                <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Group Banner</h3>
-                                <img src={bannerUrl} alt="Banner" className="w-full h-32 object-cover rounded-xl" />
-                            </div>
-                        )}
-
-                        {/* Description */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Description</h3>
-                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{group.description}</p>
-                        </div>
-
-                        {/* Group Type */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Group Type</h3>
-                            <div className="flex items-center gap-2">
-                                <Icon name={group.isPrivate ? 'lock' : 'globe'} className="h-5 w-5 text-gray-500" />
-                                <span className="font-bold">{group.isPrivate ? 'Private' : 'Public'}</span>
+                        <div className="mb-8">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Group Banner</h3>
+                            <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 h-40 bg-gray-100 dark:bg-gray-800">
+                                {bannerUrl ? (
+                                    <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No banner set</div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Owner Info */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Owner</h3>
-                            <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                                <Avatar avatar={members.find(m => m.uid === group.ownerUid)?.avatar || 'trader-1'} className="h-10 w-10 rounded-full" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</h3>
+                                <p className="text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 min-h-[100px]">
+                                    {group.description || "No description provided."}
+                                </p>
+                            </div>
+                            <div className="space-y-6">
                                 <div>
-                                    <div className="font-bold">{members.find(m => m.uid === group.ownerUid)?.username || group.ownerEmail.split('@')[0]}</div>
-                                    <div className="text-xs text-gray-500">{group.ownerEmail}</div>
+                                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Details</h3>
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
+                                        <div className="p-3 flex justify-between items-center">
+                                            <span className="text-sm text-gray-500">Type</span>
+                                            <span className="font-bold flex items-center gap-2">
+                                                <Icon name={group.isPrivate ? 'lock' : 'globe'} className="h-4 w-4" />
+                                                {group.isPrivate ? 'Private' : 'Public'}
+                                            </span>
+                                        </div>
+                                        <div className="p-3 flex justify-between items-center">
+                                            <span className="text-sm text-gray-500">Created</span>
+                                            <span className="font-bold">{group.createdAt?.toDate ? group.createdAt.toDate().toLocaleDateString() : 'Recently'}</span>
+                                        </div>
+                                        <div className="p-3 flex justify-between items-center">
+                                            <span className="text-sm text-gray-500">Owner</span>
+                                            <span className="font-bold text-sky-500">{members.find(m => m.uid === group.ownerUid)?.username || 'Unknown'}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
-                        {/* Created At */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Created</h3>
-                            <p className="font-bold">{group.createdAt?.toDate ? group.createdAt.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Recently'}</p>
-                        </div>
-
-                        {/* Invite Code (Owner Only) */}
-                        {isOwner && (
-                            <div className="mb-6">
-                                <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Invite Code</h3>
-                                <div className="flex gap-2">
-                                    <code className="flex-grow bg-black/10 dark:bg-black/30 p-3 rounded-lg font-mono text-sm select-all">
-                                        {group.inviteCode}
-                                    </code>
-                                    <Button onClick={() => copyToClipboard(group.inviteCode, 'Code')}>
-                                        Copy
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Password (Private Groups, Owner Only) */}
-                        {isOwner && group.isPrivate && group.password && (
-                            <div className="mb-6">
-                                <h3 className="text-sm font-bold text-gray-500 uppercase mb-2">Password</h3>
-                                <code className="block bg-black/10 dark:bg-black/30 p-3 rounded-lg font-mono text-sm">
-                                    ••••••••
-                                </code>
-                                <p className="text-xs text-gray-500 mt-2">Password is hashed and cannot be displayed</p>
-                            </div>
-                        )}
                     </div>
                 )}
             </div>
@@ -459,8 +489,11 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                 <Modal onClose={() => setShowSettings(false)}>
                     <h2 className="text-xl font-bold mb-4">Group Settings</h2>
                     <div className="space-y-4">
-                        <Button variant="danger" className="w-full" onClick={handleDeleteGroup}>Delete Group</Button>
-                        <p className="text-xs text-gray-500 text-center">Only the owner can delete this group.</p>
+                        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-900/50">
+                            <h4 className="font-bold text-red-600 dark:text-red-400 mb-2">Danger Zone</h4>
+                            <p className="text-sm text-red-500/80 mb-4">Deleting a group cannot be undone. All messages and media will be lost.</p>
+                            <Button variant="danger" className="w-full" onClick={handleDeleteGroup}>Delete Group</Button>
+                        </div>
                     </div>
                 </Modal>
             )}

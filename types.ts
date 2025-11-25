@@ -27,6 +27,9 @@ export interface UserProfile {
       aiExplanationGenerated?: boolean;
     };
   };
+  followersCount?: number;
+  followingCount?: number;
+  lastLogin?: Date;
   stats: {
     analysesRun: number;
     chartsUploaded: number;
@@ -101,7 +104,8 @@ export interface Group {
   avatarUrl: string | null;
   bannerUrl?: string | null; // Group banner image
   isPrivate: boolean;
-  password?: string | null;
+  password?: string | null; // Deprecated in favor of passwordHash
+  passwordHash?: string | null;
   ownerUid: string;
   ownerEmail: string;
   inviteCode: string;

@@ -35,7 +35,10 @@ export const Icon = ({ name, className }: { name: string, className?: string }) 
         mail: <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />,
         sun: <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />,
         moon: <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />,
-        calendar: <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+        calendar: <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />,
+        image: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />,
+        link: <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />,
+        settings: <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     };
 
     return (
@@ -376,6 +379,41 @@ export const CreateGroupModal: React.FC<{ onClose: () => void, onCreate: (groupD
                 )}
                 <Button className="w-full mt-4" onClick={handleCreate} disabled={isLimitReached}>
                     {isLimitReached ? 'Limit Reached' : 'Create Group'}
+                </Button>
+            </div>
+        </Modal>
+    );
+};
+
+export const JoinByInviteModal: React.FC<{ onClose: () => void, onJoin: (code: string, password?: string) => void }> = ({ onClose, onJoin }) => {
+    const [code, setCode] = useState('');
+    const [password, setPassword] = useState('');
+
+    return (
+        <Modal onClose={onClose}>
+            <h2 className="text-xl font-bold mb-6">Join by Invite Code</h2>
+            <div className="space-y-4">
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">INVITE CODE</label>
+                    <input
+                        className="w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-lg outline-none font-mono uppercase"
+                        value={code}
+                        onChange={e => setCode(e.target.value.toUpperCase())}
+                        placeholder="TRD-XXXXXX"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">PASSWORD (Optional)</label>
+                    <input
+                        type="password"
+                        className="w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-lg outline-none"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="Required for private groups"
+                    />
+                </div>
+                <Button className="w-full mt-4" onClick={() => onJoin(code, password)} disabled={!code}>
+                    Join Group
                 </Button>
             </div>
         </Modal>
