@@ -3,7 +3,7 @@ import { Icon, Button, Avatar, Modal, Loader, Tabs } from '../components';
 import * as FirestoreService from '../services/firestoreService';
 import * as StorageService from '../services/storageService';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from '../firebase';
+import { storage } from '../services/firebase';
 import type { Group, GroupChatMessage, UserProfile, GroupMember } from '../types';
 import QRCode from 'qrcode';
 

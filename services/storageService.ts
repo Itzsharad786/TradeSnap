@@ -1,4 +1,4 @@
-import { storage } from '../firebase';
+import { storage } from './firebase';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export const uploadGroupImage = async (file: File, path: string): Promise<string> => {
