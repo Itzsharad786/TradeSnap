@@ -1,6 +1,26 @@
 // UPDATED PROFILE PAGE COMPONENT
 // Replace the existing ProfilePage export in pages.tsx with this code
 
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import * as FirestoreService from './services/firestoreService';
+import { Icon, Avatar, Loader } from './components';
+import { ProfileAvatarPicker } from './components/ProfileAvatarPicker';
+import type { UserProfile, Group } from './types';
+
+// PageWrapper component (copy from pages.tsx or define here)
+const PageWrapper: React.FC<{ className?: string } & React.PropsWithChildren> = ({ children, className }) => (
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.4 }}
+        className={`pt-24 pb-8 px-4 md:px-8 max-w-7xl mx-auto ${className}`}
+    >
+        {children}
+    </motion.div>
+);
+
 export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: string | null, onProfileUpdate: any, onLogout: () => void }> = ({ profile, viewUid, onProfileUpdate, onLogout }) => {
     const [displayProfile, setDisplayProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
