@@ -48,13 +48,10 @@ export const HomePage: React.FC<{ userProfile: UserProfile, setPage: (page: Page
     return (
         <motion.div initial="initial" animate="animate" exit="exit" className="min-h-screen">
             <section className="relative h-[90vh] flex flex-col items-center justify-center text-center overflow-hidden px-4">
-                {/* Backgrounds */}
                 <div className="absolute inset-0 bg-[#050810] -z-30" />
                 <div className="absolute inset-0 -z-20 opacity-80">
                     <HyperspeedBG effectOptions={{ preset: "one" }} />
                 </div>
-
-                {/* Floating Particles (Subtle) */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
                     {[...Array(15)].map((_, i) => (
                         <motion.div
@@ -71,8 +68,6 @@ export const HomePage: React.FC<{ userProfile: UserProfile, setPage: (page: Page
                         />
                     ))}
                 </div>
-
-                {/* Hero Content with Glassmorphism */}
                 <motion.div
                     initial={{ opacity: 0, y: 40, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -80,11 +75,9 @@ export const HomePage: React.FC<{ userProfile: UserProfile, setPage: (page: Page
                     className="relative z-10 max-w-4xl mx-auto"
                 >
                     <div className="relative bg-[#0a0e1a]/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-16 shadow-2xl overflow-hidden group">
-                        {/* Inner Glow */}
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-1 bg-gradient-to-r from-transparent via-sky-500 to-transparent opacity-50 blur-sm" />
                         <div className="absolute -top-[200px] -left-[200px] w-[400px] h-[400px] bg-sky-500/10 rounded-full blur-[100px] pointer-events-none" />
                         <div className="absolute -bottom-[200px] -right-[200px] w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none" />
-
                         <motion.span
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -93,19 +86,16 @@ export const HomePage: React.FC<{ userProfile: UserProfile, setPage: (page: Page
                         >
                             Tradesnap AI 2.0
                         </motion.span>
-
                         <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white mb-6 leading-[0.9]">
                             Precision Trading <br />
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 animate-gradient-x">
                                 Starts Here.
                             </span>
                         </h1>
-
                         <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed mb-10 font-light tracking-wide">
                             Experience the future of market simulation. <br className="hidden md:block" />
                             AI-powered analysis, real-time data, and a global elite community.
                         </p>
-
                         <motion.button
                             whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(14, 165, 233, 0.6)" }}
                             whileTap={{ scale: 0.95 }}
@@ -119,7 +109,6 @@ export const HomePage: React.FC<{ userProfile: UserProfile, setPage: (page: Page
                     </div>
                 </motion.div>
             </section>
-
             <section className="py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {features.map((f, i) => (
@@ -189,7 +178,6 @@ export const MarketPage: React.FC = () => {
 };
 
 // --- COMMUNITY COMPONENTS ---
-
 const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: Group) => void }> = ({ userProfile, onSelectGroup }) => {
     const [activeTab, setActiveTab] = useState<'explore' | 'my_groups'>('explore');
     const [publicGroups, setPublicGroups] = useState<Group[]>([]);
@@ -208,7 +196,6 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
         }
     }, [userProfile]);
 
-    // Fetch public groups for explore tab
     useEffect(() => {
         if (activeTab === 'explore') {
             setLoading(true);
@@ -220,7 +207,6 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
         }
     }, [activeTab]);
 
-    // Fetch owned and joined groups for my_groups tab
     useEffect(() => {
         if (activeTab === 'my_groups' && userProfile) {
             setLoading(true);
@@ -228,7 +214,6 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
                 setOwnedGroups(loaded);
             });
             const unsubJoined = FirestoreService.getGroupsForUser(userProfile.uid, (loaded) => {
-                // Filter out owned groups from joined groups
                 const filtered = loaded.filter(g => g.ownerUid !== userProfile.uid);
                 setJoinedGroups(filtered);
                 setLoading(false);
@@ -430,7 +415,7 @@ const GroupPageInternal: React.FC<{ group: Group, userProfile: UserProfile | nul
                     {isOwner && <Button variant="danger" onClick={handleDelete}>Delete</Button>}
                 </div>
             </div>
-            <Tabs active={activeTab} onChange={setActiveTab} tabs={[{ id: 'chat', label: 'Chat' }, { id: 'members', label: 'Members' }, { id: 'info', label: 'Info' }]} />
+            <Tabs active={activeTab} onChange={setActiveTab} tabs={[{ id: 'chat', label: 'Chat' }, { id: 'members', label: 'Members' }, { id: 'info', label: 'Info' }, { id: 'share', label: 'Share' }]} />
             <div className="flex-grow overflow-hidden relative mt-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800">
                 {activeTab === 'chat' && (
                     <div className="h-full flex flex-col">
@@ -467,8 +452,21 @@ const GroupPageInternal: React.FC<{ group: Group, userProfile: UserProfile | nul
                     <div className="p-6">
                         <p>{group.description}</p>
                         <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded">
-                            <div className="text-xs text-gray-500">Invite Link</div>
-                            <div className="font-mono select-all">https://tradesnap-live.netlify.app/community/join?code={group.inviteCode}</div>
+                            <div className="text-xs text-gray-500">Invite Code</div>
+                            <div className="font-mono text-xl font-bold">{group.inviteCode}</div>
+                        </div>
+                    </div>
+                )}
+                {activeTab === 'share' && (
+                    <div className="p-6 flex flex-col items-center justify-center text-center h-full">
+                        <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
+                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://tradesnap-live.netlify.app/community/join?code=${group.inviteCode}`)}`} alt="QR Code" />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">Invite Friends</h3>
+                        <p className="text-gray-500 mb-6">Share this code or QR to invite others.</p>
+                        <div className="flex gap-2">
+                            <div className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg font-mono">{group.inviteCode}</div>
+                            <Button onClick={() => navigator.clipboard.writeText(group.inviteCode)}>Copy Code</Button>
                         </div>
                     </div>
                 )}
@@ -542,209 +540,99 @@ export const AnalyzerPage: React.FC = () => {
     );
 };
 
-// --- PROFILE PAGE ---
 export const ProfilePage: React.FC<{ profile: UserProfile | null, viewUid?: string | null, onProfileUpdate: any, onLogout: () => void }> = ({ profile, viewUid, onProfileUpdate, onLogout }) => {
     const [displayProfile, setDisplayProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showAvatarPicker, setShowAvatarPicker] = useState(false);
     const [joinedGroups, setJoinedGroups] = useState<Group[]>([]);
-
-    // Determine which UID to show
     const targetUid = viewUid || (profile ? profile.uid : null);
     const isOwnProfile = profile && targetUid === profile.uid;
-
-    // Listen for profile changes
     useEffect(() => {
-        if (!targetUid) {
-            setLoading(false);
-            return;
-        }
+        if (!targetUid) { setLoading(false); return; }
         setLoading(true);
-        const unsubscribe = FirestoreService.listenToUserProfile(targetUid, (fetchedProfile) => {
-            setDisplayProfile(fetchedProfile);
-            setLoading(false);
-        });
+        const unsubscribe = FirestoreService.listenToUserProfile(targetUid, (p) => { setDisplayProfile(p); setLoading(false); });
         return () => unsubscribe();
     }, [targetUid]);
-
-    // Listen for joined groups
     useEffect(() => {
         if (!targetUid) return;
-        const unsubscribe = FirestoreService.getGroupsForUser(targetUid, (groups) => {
-            setJoinedGroups(groups);
-        });
+        const unsubscribe = FirestoreService.getGroupsForUser(targetUid, setJoinedGroups);
         return () => unsubscribe();
     }, [targetUid]);
-
-    // Local edit state (initialized when displayProfile loads)
     const [editName, setEditName] = useState('');
     const [editBio, setEditBio] = useState('');
-
+    const [editInstagram, setEditInstagram] = useState('');
     useEffect(() => {
         if (displayProfile) {
             setEditName(displayProfile.name || '');
             setEditBio(displayProfile.bio || "Crypto enthusiast & day trader.");
+            setEditInstagram(displayProfile.instagramHandle || '');
         }
     }, [displayProfile]);
-
     const handleSave = async () => {
         if (!isOwnProfile || !displayProfile) return;
         setSaving(true);
-        const updated = { ...displayProfile, name: editName, bio: editBio };
+        const updated = { ...displayProfile, name: editName, bio: editBio, instagramHandle: editInstagram };
         await FirestoreService.createOrUpdateUserProfile(updated);
-        onProfileUpdate(updated); // Update global app state
+        onProfileUpdate(updated);
         setSaving(false);
     };
-
     const stats = [
         { label: 'Groups Joined', value: joinedGroups.length.toString(), icon: 'community', color: 'text-emerald-400' },
         { label: 'Last Active', value: displayProfile?.lastActive ? new Date(displayProfile.lastActive).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never', icon: 'calendar', color: 'text-blue-400' },
         { label: 'Joined', value: displayProfile?.createdAt ? new Date(displayProfile.createdAt).toLocaleDateString() : 'Nov 2023', icon: 'calendar', color: 'text-purple-400' },
     ];
-
     if (!targetUid) return <PageWrapper><div className="text-center mt-20">Profile not found.</div></PageWrapper>;
     if (loading) return <PageWrapper><Loader text="Loading Profile..." /></PageWrapper>;
     if (!displayProfile) return <PageWrapper><div className="text-center mt-20">User not found.</div></PageWrapper>;
-
     return (
         <PageWrapper className="max-w-4xl">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative overflow-hidden rounded-3xl bg-[#0a0e1a]/80 backdrop-blur-xl border border-white/10 shadow-2xl"
-            >
-                {/* Background Glow */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden rounded-3xl bg-[#0a0e1a]/80 backdrop-blur-xl border border-white/10 shadow-2xl">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-gradient-to-b from-sky-500/10 to-transparent pointer-events-none" />
-
                 <div className="relative z-10 p-8 md:p-12">
-                    {/* Header Section */}
                     <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
                         <div className="relative">
-                            <motion.div
-                                animate={{
-                                    boxShadow: [
-                                        `0 0 20px ${displayProfile.themeColor || '#0ea5e9'}40`,
-                                        `0 0 40px ${displayProfile.themeColor || '#0ea5e9'}60`,
-                                        `0 0 20px ${displayProfile.themeColor || '#0ea5e9'}40`
-                                    ]
-                                }}
-                                transition={{ duration: 3, repeat: Infinity }}
-                                className="rounded-full p-1 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/10"
-                            >
+                            <motion.div animate={{ boxShadow: [`0 0 20px ${displayProfile.themeColor || '#0ea5e9'}40`, `0 0 40px ${displayProfile.themeColor || '#0ea5e9'}60`, `0 0 20px ${displayProfile.themeColor || '#0ea5e9'}40`] }} transition={{ duration: 3, repeat: Infinity }} className="rounded-full p-1 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md border border-white/10">
                                 <Avatar avatar={displayProfile.avatar} className="h-32 w-32 rounded-full border-4 border-[#0a0e1a]" />
                             </motion.div>
-                            {isOwnProfile && (
-                                <button
-                                    onClick={() => setShowAvatarPicker(true)}
-                                    className="absolute bottom-2 right-2 p-2 bg-sky-500 hover:bg-sky-400 text-white rounded-full shadow-lg transition-all hover:scale-110"
-                                >
-                                    <Icon name="upload" className="h-4 w-4" />
-                                </button>
-                            )}
+                            {isOwnProfile && <button onClick={() => setShowAvatarPicker(true)} className="absolute bottom-2 right-2 p-2 bg-sky-500 hover:bg-sky-400 text-white rounded-full shadow-lg transition-all hover:scale-110"><Icon name="upload" className="h-4 w-4" /></button>}
                         </div>
-
                         <div className="text-center md:text-left flex-grow space-y-2">
                             <h1 className="text-4xl font-black tracking-tight text-white">{displayProfile.name}</h1>
                             <p className="text-lg text-gray-400 font-medium">@{displayProfile.username || 'user'}</p>
-                            <div className="flex items-center justify-center md:justify-start gap-2 pt-2">
-                                <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider border border-emerald-500/20">
-                                    Pro Trader
-                                </span>
-                                <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider border border-blue-500/20">
-                                    Level 12
-                                </span>
-                            </div>
                         </div>
                     </div>
-
-                    {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
                         {stats.map((stat, i) => (
-                            <motion.div
-                                key={i}
-                                whileHover={{ y: -5 }}
-                                className="bg-white/5 border border-white/10 p-6 rounded-2xl flex items-center gap-4"
-                            >
-                                <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
-                                    <Icon name={stat.icon} className="h-6 w-6" />
-                                </div>
-                                <div>
-                                    <div className="text-2xl font-bold text-white">{stat.value}</div>
-                                    <div className="text-xs text-gray-500 uppercase font-bold tracking-wider">{stat.label}</div>
-                                </div>
+                            <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/5 border border-white/10 p-6 rounded-2xl flex items-center gap-4">
+                                <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}><Icon name={stat.icon} className="h-6 w-6" /></div>
+                                <div><div className="text-2xl font-bold text-white">{stat.value}</div><div className="text-xs text-gray-500 uppercase font-bold tracking-wider">{stat.label}</div></div>
                             </motion.div>
                         ))}
                     </div>
-
-                    {/* Settings Form (Only if Own Profile) */}
                     {isOwnProfile ? (
                         <div className="space-y-8 bg-black/20 rounded-2xl p-8 border border-white/5">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Display Name</label>
-                                <input
-                                    value={editName}
-                                    onChange={e => setEditName(e.target.value)}
-                                    className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Display Name</label><input value={editName} onChange={e => setEditName(e.target.value)} className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 outline-none" /></div>
+                                <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Instagram Handle</label><div className="relative"><span className="absolute left-4 top-3.5 text-gray-500">@</span><input value={editInstagram} onChange={e => setEditInstagram(e.target.value)} placeholder="username" className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl pl-8 pr-4 py-3 text-white focus:border-sky-500 outline-none" /></div></div>
                             </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bio</label>
-                                <textarea
-                                    value={editBio}
-                                    onChange={e => setEditBio(e.target.value)}
-                                    className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none transition-all min-h-[120px] resize-none"
-                                />
-                            </div>
-
+                            <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email (Read Only)</label><input value={displayProfile.email || 'Guest User'} readOnly className="w-full bg-[#0a0e1a]/50 border border-gray-800 rounded-xl px-4 py-3 text-gray-400 cursor-not-allowed" /></div>
+                            <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bio</label><textarea value={editBio} onChange={e => setEditBio(e.target.value)} className="w-full bg-[#0a0e1a] border border-gray-800 rounded-xl px-4 py-3 text-white focus:border-sky-500 outline-none min-h-[120px] resize-none" /></div>
                             <div className="pt-4 flex gap-4">
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={handleSave}
-                                    disabled={saving}
-                                    className="flex-grow bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40 transition-all disabled:opacity-50"
-                                >
-                                    {saving ? 'Saving...' : 'Save Changes'}
-                                </motion.button>
-                                <motion.button
-                                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={onLogout}
-                                    className="px-8 py-4 rounded-xl border border-red-500/30 text-red-500 font-bold hover:border-red-500 transition-all"
-                                >
-                                    Logout
-                                </motion.button>
+                                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={saving} className="flex-grow bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40 transition-all disabled:opacity-50">{saving ? 'Saving...' : 'Save Changes'}</motion.button>
+                                <motion.button whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.1)' }} whileTap={{ scale: 0.98 }} onClick={onLogout} className="px-8 py-4 rounded-xl border border-red-500/30 text-red-500 font-bold hover:border-red-500 transition-all">Logout</motion.button>
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-4 bg-black/20 rounded-2xl p-8 border border-white/5">
-                            <h3 className="text-xl font-bold text-white">About</h3>
-                            <p className="text-gray-400 leading-relaxed">{displayProfile.bio || "No bio available."}</p>
-                        </div>
+                        <div className="space-y-4 bg-black/20 rounded-2xl p-8 border border-white/5"><h3 className="text-xl font-bold text-white">About</h3><p className="text-gray-400 leading-relaxed">{displayProfile.bio || "No bio available."}</p></div>
                     )}
                 </div>
             </motion.div>
-
-            {/* Avatar Picker Modal */}
-            {showAvatarPicker && displayProfile && (
-                <ProfileAvatarPicker
-                    userProfile={displayProfile}
-                    onAvatarChange={async (avatarUrl) => {
-                        const updated = { ...displayProfile, avatar: avatarUrl };
-                        setDisplayProfile(updated);
-                        onProfileUpdate(updated);
-                        await FirestoreService.createOrUpdateUserProfile(updated);
-                    }}
-                    onClose={() => setShowAvatarPicker(false)}
-                />
-            )}
+            {showAvatarPicker && displayProfile && <ProfileAvatarPicker userProfile={displayProfile} onAvatarChange={async (avatarUrl) => { const updated = { ...displayProfile, avatar: avatarUrl }; setDisplayProfile(updated); onProfileUpdate(updated); await FirestoreService.createOrUpdateUserProfile(updated); }} onClose={() => setShowAvatarPicker(false)} />}
         </PageWrapper>
     );
 };
 
-// --- NEWS PAGE ---
 export const NewsPage: React.FC = () => {
     const [news, setNews] = useState<NewsArticleWithImage[]>([]);
     useEffect(() => { fetchNews().then(setNews); }, []);
