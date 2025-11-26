@@ -3,8 +3,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useLocalStorage } from './hooks';
 import { HomePage, MarketPage, NewsPage, AnalyzerPage, TraderLabPage, CommunityPage, ProfilePage } from './pages';
+import { FullNewsPage } from './pages/FullNewsPage';
 import { Loader, TopNavBar, Icon, Footer } from './components';
-import type { UserProfile, Page } from './types';
+import type { UserProfile, Page, NewsArticleWithImage } from './types';
 import * as FirestoreService from './services/firestoreService';
 import * as AuthService from './services/authService';
 import { auth } from './firebase/index';
@@ -27,6 +28,7 @@ export default function App() {
 
     const [targetGroupId, setTargetGroupId] = useState<string | undefined>(undefined);
     const [viewProfileUid, setViewProfileUid] = useState<string | null>(null);
+    const [selectedArticle, setSelectedArticle] = useState<NewsArticleWithImage | null>(null);
 
     // Handle Invite Links & Profile Links on Mount
     useEffect(() => {
@@ -140,6 +142,12 @@ export default function App() {
         setPage('Home');
     };
 
+    const handleNewsClick = (article: NewsArticleWithImage) => {
+        setSelectedArticle(article);
+        setPage('FullNews');
+        window.scrollTo(0, 0);
+    };
+
     // Render Login/Signup Screen
     if (!userProfile && !viewProfileUid) {
         return (
@@ -163,7 +171,8 @@ export default function App() {
                     <motion.div key={page} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                         {page === 'Home' && <HomePage userProfile={userProfile} setPage={setPage} />}
                         {page === 'Market' && <MarketPage />}
-                        {page === 'News' && <NewsPage />}
+                        {page === 'News' && <NewsPage onArticleSelect={handleNewsClick} />}
+                        {page === 'FullNews' && <FullNewsPage article={selectedArticle} onBack={() => setPage('News')} />}
                         {page === 'Analyzer' && <AnalyzerPage />}
                         {page === 'TraderLab' && <TraderLabPage />}
                         {page === 'Community' && <CommunityPage initialGroupId={targetGroupId} userProfile={userProfile} />}
