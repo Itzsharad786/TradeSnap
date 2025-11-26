@@ -82,8 +82,8 @@ export const TopNavBar = ({ page, setPage }: { page: Page, setPage: (p: Page) =>
                     <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setPage('Home')}>
                         <img
                             src="/bull-logo.png"
-                            className="w-[58px] h-auto object-contain transition-all duration-300 drop-shadow-[0_0_10px_rgba(14,165,233,0.3)] group-hover:drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]"
-                            alt="Tradesnap logo"
+                            alt="Tradesnap Logo"
+                            className="h-8 w-8 object-contain"
                         />
                         <span className="text-[22px] font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Tradesnap</span>
                     </div>
