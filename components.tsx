@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { UserProfile, Group, NewsArticleWithImage, Page } from './types';
 import { PROFILE_AVATARS } from './types';
-import BullLogo from '@/components/bull-logo.png';
 
 export const Icon = ({ name, className }: { name: string, className?: string }) => {
     const icons: { [key: string]: React.ReactElement } = {
@@ -82,7 +81,7 @@ export const TopNavBar = ({ page, setPage }: { page: Page, setPage: (p: Page) =>
                     {/* Logo Section */}
                     <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setPage('Home')}>
                         <img
-                            src={BullLogo}
+                            src="/bull-logo.png"
                             className="w-[58px] h-auto object-contain transition-all duration-300 drop-shadow-[0_0_10px_rgba(14,165,233,0.3)] group-hover:drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]"
                             alt="Tradesnap logo"
                         />

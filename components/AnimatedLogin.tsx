@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icon, Loader } from '../components';
-import BullLogo from '@/components/bull-logo.png';
 
 interface AnimatedLoginProps {
     onLogin: (email: string, pass: string) => Promise<void>;
@@ -79,7 +78,7 @@ export const AnimatedLogin: React.FC<AnimatedLoginProps> = ({
                     <div className="p-8 pb-0 text-center">
                         <motion.img
                             initial={{ scale: 0 }} animate={{ scale: 1 }}
-                            src={BullLogo}
+                            src="/bull-logo.png"
                             alt="Logo"
                             className="w-16 h-16 mx-auto mb-4 object-contain drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]"
                         />

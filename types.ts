@@ -1,5 +1,6 @@
 
 export type Page = 'Home' | 'Market' | 'News' | 'Analyzer' | 'TraderLab' | 'Community' | 'Profile';
+export type Theme = 'light' | 'dark';
 
 export interface UserProfile {
   uid: string;
@@ -149,4 +150,14 @@ export interface Position {
   status: 'OPEN' | 'CLOSED';
   pnl?: number;
   timestamp: number;
+}
+
+export interface RssArticle {
+  title: string;
+  link: string;
+  pubDate: string;
+  isoDate?: string;
+  contentSnippet: string;
+  guid: string;
+  categories: string[];
 }

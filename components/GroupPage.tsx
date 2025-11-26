@@ -188,38 +188,13 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
         <div className="h-[85vh] flex flex-col relative">
             {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg('')} />}
 
-            {/* Banner */}
-            <div className="relative w-full h-48 mb-4 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 group">
-                {bannerUrl ? (
-                    <img src={bannerUrl} alt="Group Banner" className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Icon name="image" className="h-12 w-12 opacity-20" />
-                    </div>
-                )}
-
-                {isOwner && (
-                    <button
-                        onClick={() => bannerInputRef.current?.click()}
-                        className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
-                    >
-                        <Icon name="upload" className="h-4 w-4" />
-                    </button>
-                )}
-                <input
-                    ref={bannerInputRef}
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={handleBannerUpload}
-                />
-
-                {/* Back Button Overlay */}
+            {/* Header with Back Button */}
+            <div className="flex items-center gap-4 mb-4 pt-4 px-2">
                 <button
                     onClick={onBack}
-                    className="absolute top-4 left-4 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-sm transition-all"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                 >
-                    <Icon name="arrowLeft" className="h-5 w-5" />
+                    <Icon name="arrowLeft" className="h-6 w-6" />
                 </button>
             </div>
 
@@ -286,8 +261,8 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                                             <span className="text-[10px] text-gray-400">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                         <div className={`p-3 rounded-2xl relative group-hover/msg:shadow-md transition-shadow ${msg.authorId === userProfile?.uid
-                                                ? 'bg-sky-500 text-white rounded-tr-none'
-                                                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-tl-none'
+                                            ? 'bg-sky-500 text-white rounded-tr-none'
+                                            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-tl-none'
                                             } ${msg.isPinned ? 'ring-2 ring-amber-500/50' : ''}`}>
                                             {msg.type === 'text' && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
                                             {msg.type === 'image' && (
@@ -439,17 +414,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
 
                 {activeTab === 'info' && (
                     <div className="p-6 overflow-y-auto h-full">
-                        {/* Banner Preview */}
-                        <div className="mb-8">
-                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Group Banner</h3>
-                            <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 h-40 bg-gray-100 dark:bg-gray-800">
-                                {bannerUrl ? (
-                                    <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No banner set</div>
-                                )}
-                            </div>
-                        </div>
+
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <div>

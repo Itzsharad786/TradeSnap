@@ -6,7 +6,7 @@ import { Loader, TopNavBar, Icon, Footer } from './components';
 import type { UserProfile, Page } from './types';
 import * as FirestoreService from './services/firestoreService';
 import * as AuthService from './services/authService';
-import BullLogo from '@/components/bull-logo.png';
+
 import { AnimatedLogin } from './components/AnimatedLogin';
 
 // --- Main App Component ---
