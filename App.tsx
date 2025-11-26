@@ -3,14 +3,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useLocalStorage } from './hooks';
 import { HomePage, MarketPage, NewsPage, AnalyzerPage, TraderLabPage, CommunityPage, ProfilePage } from './pages';
-import { FullNewsPage } from './pages/FullNewsPage';
-import { Loader, TopNavBar, Icon, Footer } from './components';
+import { NewsDetailPage } from './pages/NewsDetailPage';
+import { TopNavBar, Footer } from './components';
+import { AnimatedLogin } from './components/AnimatedLogin';
 import type { UserProfile, Page, NewsArticleWithImage } from './types';
 import * as FirestoreService from './services/firestoreService';
 import * as AuthService from './services/authService';
 import { auth } from './firebase/index';
-
-import { AnimatedLogin } from './components/AnimatedLogin';
 
 // --- Main App Component ---
 export default function App() {
@@ -28,7 +27,7 @@ export default function App() {
 
     const [targetGroupId, setTargetGroupId] = useState<string | undefined>(undefined);
     const [viewProfileUid, setViewProfileUid] = useState<string | null>(null);
-    const [selectedArticle, setSelectedArticle] = useState<NewsArticleWithImage | null>(null);
+    const [selectedArticle, setSelectedArticle] = useState<any | null>(null);
 
     // Handle Invite Links & Profile Links on Mount
     useEffect(() => {
@@ -142,9 +141,9 @@ export default function App() {
         setPage('Home');
     };
 
-    const handleNewsClick = (article: NewsArticleWithImage) => {
+    const handleNewsClick = (article: any) => {
         setSelectedArticle(article);
-        setPage('FullNews');
+        setPage('NewsDetail');
         window.scrollTo(0, 0);
     };
 
@@ -172,7 +171,7 @@ export default function App() {
                         {page === 'Home' && <HomePage userProfile={userProfile} setPage={setPage} />}
                         {page === 'Market' && <MarketPage />}
                         {page === 'News' && <NewsPage onArticleSelect={handleNewsClick} />}
-                        {page === 'FullNews' && <FullNewsPage article={selectedArticle} onBack={() => setPage('News')} />}
+                        {page === 'NewsDetail' && <NewsDetailPage article={selectedArticle} onBack={() => setPage('News')} />}
                         {page === 'Analyzer' && <AnalyzerPage />}
                         {page === 'TraderLab' && <TraderLabPage />}
                         {page === 'Community' && <CommunityPage initialGroupId={targetGroupId} userProfile={userProfile} />}

@@ -1,5 +1,5 @@
 
-export type Page = 'Home' | 'Market' | 'News' | 'Analyzer' | 'TraderLab' | 'Community' | 'Profile' | 'FullNews';
+export type Page = 'Home' | 'Market' | 'News' | 'Analyzer' | 'TraderLab' | 'Community' | 'Profile' | 'FullNews' | 'NewsDetail';
 export type Theme = 'light' | 'dark';
 
 export interface UserProfile {
