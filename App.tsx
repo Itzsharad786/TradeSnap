@@ -102,15 +102,6 @@ export default function App() {
         } catch (err: any) { setError(err.message || 'Signup failed'); } finally { setIsLoading(false); }
     };
 
-    const handleGuestLogin = async () => {
-        setIsLoading(true); setError('');
-        try {
-            const profile = await AuthService.loginAsGuest();
-            setUserProfile(profile);
-            setPage('Home');
-        } catch (err: any) { setError(err.message || 'Guest login failed'); } finally { setIsLoading(false); }
-    };
-
     const handleResetPassword = async (email: string) => {
         setIsLoading(true); setError('');
         try {
@@ -130,7 +121,6 @@ export default function App() {
             <AnimatedLogin
                 onLogin={handleLogin}
                 onSignup={handleSignup}
-                onGuest={handleGuestLogin}
                 onResetPassword={handleResetPassword}
                 isLoading={isLoading}
                 error={error}

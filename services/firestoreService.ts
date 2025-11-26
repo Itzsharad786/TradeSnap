@@ -472,6 +472,12 @@ export const updateGroupBanner = async (groupId: string, bannerUrl: string): Pro
     await updateDoc(groupRef, { bannerUrl });
 };
 
+// Update group avatar
+export const updateGroupAvatar = async (groupId: string, avatarUrl: string): Promise<void> => {
+    const groupRef = doc(db, "groups", groupId);
+    await updateDoc(groupRef, { avatarUrl });
+};
+
 // Get member details with online status
 export const getGroupMembersWithDetails = async (groupId: string): Promise<GroupMember[]> => {
     const groupRef = doc(db, "groups", groupId);
@@ -553,4 +559,56 @@ export const isFollowing = async (currentUid: string, targetUid: string): Promis
     const docRef = doc(db, "users", currentUid, "following", targetUid);
     const docSnap = await getDoc(docRef);
     return docSnap.exists();
+};
+
+// Alias for isFollowing (for compatibility)
+export const checkIfFollowing = isFollowing;
+
+// Get all groups visible to a user (public + groups they're a member of)
+export const getAllGroups = async (userUid: string): Promise<Group[]> => {
+    try {
+        // Get all public groups
+        const publicQuery = query(
+            collection(db, "groups"),
+            where("type", "==", "public"),
+            orderBy("createdAt", "desc")
+        );
+        const publicSnapshot = await getDocs(publicQuery);
+        const publicGroups = publicSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
+
+        // Get groups user is a member of (including private ones)
+        const memberQuery = query(
+            collection(db, "groups"),
+            where("membersUidList", "array-contains", userUid),
+            orderBy("createdAt", "desc")
+        );
+        const memberSnapshot = await getDocs(memberQuery);
+        const memberGroups = memberSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
+
+        // Combine and deduplicate
+        const allGroupsMap = new Map<string, Group>();
+        [...publicGroups, ...memberGroups].forEach(group => {
+            allGroupsMap.set(group.id, group);
+        });
+
+        return Array.from(allGroupsMap.values());
+    } catch (error) {
+        console.error("Error getting all groups:", error);
+        return [];
+    }
+};
+
+// Get a single group by ID
+export const getGroupById = async (groupId: string): Promise<Group | null> => {
+    try {
+        const groupRef = doc(db, "groups", groupId);
+        const groupSnap = await getDoc(groupRef);
+
+        if (!groupSnap.exists()) return null;
+
+        return { id: groupSnap.id, ...groupSnap.data() } as Group;
+    } catch (error) {
+        console.error("Error getting group by ID:", error);
+        return null;
+    }
 };

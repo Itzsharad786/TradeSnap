@@ -5,7 +5,6 @@ import { Icon, Loader } from '../components';
 interface AnimatedLoginProps {
     onLogin: (email: string, pass: string) => Promise<void>;
     onSignup: (email: string, pass: string) => Promise<void>;
-    onGuest: () => Promise<void>;
     onResetPassword: (email: string) => Promise<void>;
     isLoading: boolean;
     error: string;
@@ -15,7 +14,6 @@ interface AnimatedLoginProps {
 export const AnimatedLogin: React.FC<AnimatedLoginProps> = ({
     onLogin,
     onSignup,
-    onGuest,
     onResetPassword,
     isLoading,
     error,
@@ -50,23 +48,8 @@ export const AnimatedLogin: React.FC<AnimatedLoginProps> = ({
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a] relative overflow-hidden">
-            {/* Animated Background Shapes */}
-            <motion.div
-                animate={{
-                    scale: [1, 1.2, 1],
-                    rotate: [0, 90, 0],
-                }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-sky-500/20 rounded-full blur-[120px]"
-            />
-            <motion.div
-                animate={{
-                    scale: [1, 1.1, 1],
-                    x: [0, 100, 0],
-                }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px]"
-            />
+            {/* Static Background Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -165,23 +148,6 @@ export const AnimatedLogin: React.FC<AnimatedLoginProps> = ({
                         >
                             {isLoading ? <Loader size="sm" /> : (mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Sign Up' : 'Send Reset Link')}
                         </button>
-
-                        {mode !== 'forgot' && (
-                            <div className="relative py-2">
-                                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-                                <div className="relative flex justify-center"><span className="bg-[#131c2e] px-2 text-xs text-gray-500 uppercase">Or</span></div>
-                            </div>
-                        )}
-
-                        {mode !== 'forgot' && (
-                            <button
-                                type="button"
-                                onClick={onGuest}
-                                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-2"
-                            >
-                                <Icon name="profile" className="h-4 w-4" /> Continue as Guest
-                            </button>
-                        )}
 
                         <div className="text-center pt-2">
                             {mode === 'login' ? (

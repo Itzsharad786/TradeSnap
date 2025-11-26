@@ -18,11 +18,10 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
     const [msgText, setMsgText] = useState('');
     const [uploading, setUploading] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
-    const [bannerUrl, setBannerUrl] = useState(group.bannerUrl || '');
     const [members, setMembers] = useState<GroupMember[]>(group.members || []);
     const [toastMsg, setToastMsg] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const bannerInputRef = useRef<HTMLInputElement>(null);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
 
     const isOwner = userProfile?.uid === group.ownerUid;
     const isMember = group.members?.some(m => m.uid === userProfile?.uid);
@@ -98,7 +97,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
         }
     };
 
-    const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !isOwner) return;
 
@@ -108,16 +107,15 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
         }
 
         try {
-            const storageRef = ref(storage, `groups/${group.id}/banner.png`);
+            const storageRef = ref(storage, `groups/${group.id}/avatar.png`);
             const snapshot = await uploadBytes(storageRef, file);
             const url = await getDownloadURL(snapshot.ref);
 
-            await FirestoreService.updateGroupBanner(group.id, url);
-            setBannerUrl(url);
-            setToastMsg('Banner updated!');
+            await FirestoreService.updateGroupAvatar(group.id, url);
+            setToastMsg('Group avatar updated!');
         } catch (e) {
             console.error(e);
-            alert('Failed to upload banner');
+            alert('Failed to upload avatar');
         }
     };
 
@@ -125,11 +123,9 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
         if (!userProfile) return;
         if (group.isPrivate && !isOwner) {
             const pwd = prompt("Enter Group Password:");
-            // Note: This is a client-side check against the hash if available, or server check
-            // For now, we use the service which handles it
             const res = await FirestoreService.joinGroupByInviteCodeAndPassword(group.inviteCode, pwd || '', userProfile);
             if (res.success) {
-                setToastMsg("Joined!");
+                setToastMsg("You successfully joined this group.");
             } else {
                 alert(res.error || "Failed to join");
             }
@@ -138,7 +134,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
 
         try {
             await FirestoreService.joinGroup(group.id, { uid: userProfile.uid, email: userProfile.email || 'guest' });
-            setToastMsg("Joined!");
+            setToastMsg("You successfully joined this group.");
         } catch (e) {
             console.error(e);
             alert("Failed to join.");
@@ -180,7 +176,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
             window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(shareText)}`, '_blank');
         } else if (platform === 'instagram') {
             copyToClipboard(shareText + "\n" + inviteLink, "Caption");
-            alert("Instagram doesn't support direct web sharing. Caption copied to clipboard!");
+            setToastMsg("Caption copied! Paste it on Instagram.");
         }
     };
 
@@ -196,30 +192,36 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                 >
                     <Icon name="arrowLeft" className="h-6 w-6" />
                 </button>
-            </div>
-
-            {/* Header Info */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-800 px-2">
-                <div className="flex items-center gap-3">
-                    <Avatar avatar={group.avatarUrl || 'community'} className="h-12 w-12 rounded-xl border-2 border-white dark:border-gray-800 shadow-sm" />
+                <div className="flex-grow flex items-center gap-3">
+                    <div className="relative group/avatar">
+                        <Avatar avatar={group.avatarUrl || 'community'} className="h-10 w-10 rounded-xl border-2 border-white dark:border-gray-800 shadow-sm" />
+                        {isOwner && (
+                            <button
+                                onClick={() => avatarInputRef.current?.click()}
+                                className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity"
+                            >
+                                <Icon name="upload" className="h-4 w-4 text-white" />
+                            </button>
+                        )}
+                        <input
+                            ref={avatarInputRef}
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
+                        />
+                    </div>
                     <div>
-                        <h2 className="font-bold text-xl flex items-center gap-2">
+                        <h2 className="font-bold text-lg flex items-center gap-2">
                             {group.name}
                             {group.isPrivate && <Icon name="lock" className="h-4 w-4 text-amber-500" />}
                         </h2>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <span>{members.length} members</span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                            <span className="flex items-center gap-1">
-                                <Icon name="profile" className="h-3 w-3" />
-                                Owner: {members.find(m => m.uid === group.ownerUid)?.username || 'Unknown'}
-                            </span>
-                        </div>
+                        <span className="text-xs text-gray-500">{members.length} members</span>
                     </div>
                 </div>
                 <div className="flex gap-2">
                     {!isMember && (
-                        <Button onClick={handleJoin} className="bg-sky-600 text-white shadow-sky-500/20">Join Group</Button>
+                        <Button onClick={handleJoin} className="bg-sky-600 text-white shadow-sky-500/20">Join</Button>
                     )}
                     {isOwner && (
                         <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-500 transition-colors">
@@ -414,8 +416,6 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
 
                 {activeTab === 'info' && (
                     <div className="p-6 overflow-y-auto h-full">
-
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <div>
                                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</h3>
