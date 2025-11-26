@@ -58,6 +58,32 @@ export default function App() {
         init();
     }, []);
 
+    // CRITICAL FIX: Persistent auth state listener to prevent session loss
+    useEffect(() => {
+        const { onAuthStateChanged } = require('firebase/auth');
+        const { auth } = require('./firebase/index');
+
+        const unsubscribe = onAuthStateChanged(auth, async (user: any) => {
+            if (user && !userProfile) {
+                // User is logged in but state is lost - restore it
+                try {
+                    const profile = await AuthService.checkSession();
+                    if (profile) {
+                        setUserProfile(profile);
+                    }
+                } catch (error) {
+                    console.error('Error restoring session:', error);
+                }
+            } else if (!user && userProfile) {
+                // User logged out
+                setUserProfile(null);
+                setPage('Home');
+            }
+        });
+
+        return () => unsubscribe();
+    }, [userProfile]);
+
     // Process Pending Invite after Login
     useEffect(() => {
         const processInvite = async () => {
