@@ -77,15 +77,15 @@ export const TopNavBar = ({ page, setPage }: { page: Page, setPage: (p: Page) =>
             }}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
+                <div className="flex items-center justify-between h-20">
                     {/* Logo Section */}
                     <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setPage('Home')}>
                         <img
                             src="/bull-logo.png"
                             alt="Tradesnap Logo"
-                            className="h-12 w-12 object-contain"
+                            className="h-16 w-16 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
                         />
-                        <span className="text-[22px] font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Tradesnap</span>
+                        <span className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Tradesnap</span>
                     </div>
 
                     {/* Desktop Nav */}

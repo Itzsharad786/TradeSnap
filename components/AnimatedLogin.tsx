@@ -62,7 +62,7 @@ export const AnimatedLogin: React.FC<AnimatedLoginProps> = ({
                         <img
                             src="/bull-logo.png"
                             alt="Tradesnap Logo"
-                            className="mx-auto h-24 w-24 object-contain mb-6"
+                            className="mx-auto h-32 w-32 object-contain mb-6 drop-shadow-[0_0_15px_rgba(14,165,233,0.5)]"
                         />
                         <h2 className="text-2xl font-bold text-white mb-1">
                             {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
