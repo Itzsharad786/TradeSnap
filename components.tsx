@@ -83,7 +83,7 @@ export const TopNavBar = ({ page, setPage }: { page: Page, setPage: (p: Page) =>
                         <img
                             src="/bull-logo.png"
                             alt="Tradesnap Logo"
-                            className="h-8 w-8 object-contain"
+                            className="h-12 w-12 object-contain"
                         />
                         <span className="text-[22px] font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">Tradesnap</span>
                     </div>
