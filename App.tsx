@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { onAuthStateChanged } from 'firebase/auth';
 import { useLocalStorage } from './hooks';
 import { HomePage, MarketPage, NewsPage, AnalyzerPage, TraderLabPage, CommunityPage, ProfilePage } from './pages';
 import { Loader, TopNavBar, Icon, Footer } from './components';
 import type { UserProfile, Page } from './types';
 import * as FirestoreService from './services/firestoreService';
 import * as AuthService from './services/authService';
+import { auth } from './firebase/index';
 
 import { AnimatedLogin } from './components/AnimatedLogin';
 
@@ -60,9 +62,6 @@ export default function App() {
 
     // CRITICAL FIX: Persistent auth state listener to prevent session loss
     useEffect(() => {
-        const { onAuthStateChanged } = require('firebase/auth');
-        const { auth } = require('./firebase/index');
-
         const unsubscribe = onAuthStateChanged(auth, async (user: any) => {
             if (user && !userProfile) {
                 // User is logged in but state is lost - restore it
