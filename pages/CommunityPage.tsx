@@ -29,7 +29,7 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
 
     useEffect(() => {
         if (activeTab === 'explore') {
-            setLoading(true);
+            if (publicGroups.length === 0) setLoading(true);
             const unsubscribe = FirestoreService.getPublicGroups((loaded) => {
                 setPublicGroups(loaded);
                 setLoading(false);
@@ -40,7 +40,7 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
 
     useEffect(() => {
         if (activeTab === 'my_groups' && userProfile) {
-            setLoading(true);
+            if (joinedGroups.length === 0) setLoading(true);
             // Owned groups already fetched by the other effect, but we need joined groups
             const unsubJoined = FirestoreService.getGroupsForUser(userProfile.uid, (loaded) => {
                 const filtered = loaded.filter(g => g.ownerUid !== userProfile.uid);

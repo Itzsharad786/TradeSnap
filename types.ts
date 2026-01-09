@@ -161,3 +161,168 @@ export interface RssArticle {
   guid: string;
   categories: string[];
 }
+
+export interface StockAnalysisData {
+  company: {
+    name: string;
+    ticker: string;
+    description: string;
+    sector: string;
+    industry: string;
+    ceo: string;
+    headquarters: string;
+    founded: string;
+    exchange: string; // Added requirement
+    employees?: string;
+  };
+  price: {
+    current: number;
+    change: number;
+    changePercent: number;
+    currency: string;
+    marketCap: string;
+    volume: string;
+    avgVolume: string;
+    dayHigh: number;
+    dayLow: number;
+    yearHigh: number;
+    yearLow: number;
+    peRatio: string;
+    eps: string;
+    dividendYield: string;
+    nextEarningsDate?: string;
+  };
+  // Expanded for "Full Dossier" structure
+  fundamentals: { // New Section
+    revenueTrend: string;
+    profitability: string;
+    debtStatus: string;
+    valuation: 'Overvalued' | 'Fair' | 'Undervalued';
+    valuationReason: string;
+  };
+  riskAnalysis: { // New Section
+    marketRisk: string;
+    newsRisk: string;
+    volatility: 'Low' | 'Medium' | 'High';
+    riskScore: number;
+  };
+  futureOutlook: { // New Section
+    shortTerm: string; // 1-4 weeks
+    midTerm: string;   // 3-6 months
+    longTerm: string;  // 1+ year
+  };
+  // Technicals
+  technicalAnalysis: {
+    trend: 'Bullish' | 'Bearish' | 'Neutral';
+    rsi: string;
+    macd: string;
+    keySupport: string[];
+    keyResistance: string[];
+  };
+  // Legacy analysis object mapping for backward compatibility if needed, 
+  // but primary logic should move to specific sections above.
+  analysis: {
+    recommendation: 'Buy' | 'Sell' | 'Hold';
+    confidence: number;
+    trend: 'Bullish' | 'Bearish' | 'Neutral';
+    riskScore: number;
+    opportunityScore: number;
+    volatility: 'Low' | 'Medium' | 'High';
+    liquidity: 'High' | 'Medium' | 'Low';
+    momentum: 'Strong' | 'Weak' | 'Neutral';
+    sentiment: 'Positive' | 'Negative' | 'Neutral';
+    targetPrice1W: number;
+    targetPrice1M: number;
+    targetPrice3M: number;
+    targetPrice6M: number;
+    targetPrice1Y: number;
+    drivers: string[];
+  };
+  keyLevels: {
+    support: string[];
+    resistance: string[];
+  };
+  tradeSetup: ChartAnalysisData;
+  explanation: string;
+  verdict: { // New Section
+    action: 'Buy' | 'Hold' | 'Avoid';
+    targetAudience: 'Trader' | 'Investor' | 'Avoid';
+    reasoning: string;
+  };
+  news: {
+    headline: string;
+    time: string;
+    source?: string;
+    summary: string;
+    sentiment: 'Positive' | 'Negative' | 'Neutral';
+    impact: 'High' | 'Medium' | 'Low';
+    url?: string;
+  }[];
+  forecast: {
+    probBullish: number;
+    probBearish: number;
+    projection1M: string;
+    projection1Y: string;
+  };
+  chartData: {
+    price: number;
+    label: string;
+  }[];
+}
+
+export interface ChartAnalysisData {
+  // New Structured Fields
+  chartType: {
+    timeframe: string;
+    asset: string;
+  };
+  trendAnalysis: {
+    marketStructure: 'Bullish' | 'Bearish' | 'Range';
+    confirmation: string;
+  };
+  keyLevels: {
+    support: string[];
+    resistance: string[];
+  };
+  patternDetection: {
+    pattern: string;
+    status: 'Breakout' | 'Breakdown' | 'Developing';
+  };
+  indicators: {
+    rsi?: string;
+    macd?: string;
+    ma?: string;
+  };
+  tradeScenarios: {
+    bullish: string;
+    bearish: string;
+    invalidation: string;
+  };
+  riskAssessment: {
+    score: number;
+    volatility: string;
+  };
+  verdict: {
+    entryLogic: string;
+    stopLossLogic: string;
+    recommendation: 'Trade' | 'Wait';
+  };
+  // Existing fields for UI Compatibility
+  entry: number;
+  stopLoss: number;
+  tp1: number;
+  tp2: number;
+  tp3: number;
+  riskScore: number;
+  warnings: string[];
+  scenarios: {
+    mostLikely: string;
+    bullish: string;
+    bearish: string;
+  };
+  trend: 'Bullish' | 'Bearish' | 'Neutral';
+  momentum: 'Strong' | 'Weak' | 'Neutral';
+  supports: string[];
+  resistances: string[];
+  pattern?: string;
+}
