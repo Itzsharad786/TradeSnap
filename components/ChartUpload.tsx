@@ -59,7 +59,7 @@ export const ChartUpload: React.FC<ChartUploadProps> = ({ onUpload, selectedImag
                             {loading ? (
                                 <>
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    Analyzing Chart via Gemini Vision...
+                                    Analyzing Chart with AI...
                                 </>
                             ) : (
                                 <>
