@@ -24,7 +24,7 @@ export const AnalyzerPage: React.FC = () => {
             setResult(res);
         } catch (e) {
             console.error(e);
-            alert("AI service temporarily unavailable.");
+            alert("Analysis temporarily unavailable. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -35,7 +35,7 @@ export const AnalyzerPage: React.FC = () => {
             <div className="max-w-6xl mx-auto px-4 sm:px-6">
                 <div className="text-center mb-8 md:mb-12">
                     <h2 className="text-3xl md:text-4xl font-black text-white mb-4 tracking-tight">
-                        AI Market <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600">Analyzer</span>
+                        Market <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600">Analyzer</span>
                     </h2>
                     <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto">
                         Get institutional-grade analysis for any stock or technical chart pattern instantly.
@@ -231,7 +231,7 @@ export const AnalyzerPage: React.FC = () => {
 
                                     {/* 3. AI Forecast (Probabilites) */}
                                     <Card className="p-5 border-gray-800 bg-[#0f172a]">
-                                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">🔮 AI Forecast</h4>
+                                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">🔮 Forecast</h4>
                                         <div className="space-y-4">
                                             <div>
                                                 <div className="flex justify-between text-xs mb-1">
@@ -270,7 +270,7 @@ export const AnalyzerPage: React.FC = () => {
 
                                     {/* 4. AI Price Targets */}
                                     <Card className="p-5 border-gray-800 bg-[#0f172a]">
-                                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">💰 AI Price Targets</h4>
+                                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">💰 Price Targets</h4>
                                         <div className="space-y-3 relative">
                                             <div className="absolute left-0 top-2 bottom-2 w-0.5 bg-gray-700 ml-1.5"></div>
                                             <div className="flex items-center gap-3">
@@ -360,7 +360,7 @@ export const AnalyzerPage: React.FC = () => {
 
                                 {/* Trade Setup Breakdown */}
                                 <div className="mt-8 border-t border-gray-800 pt-8">
-                                    <h2 className="text-2xl font-black text-white mb-6 text-center">AI Trade Setup</h2>
+                                    <h2 className="text-2xl font-black text-white mb-6 text-center">Trade Setup</h2>
                                     <ChartResult data={result.tradeSetup} />
                                 </div>
                             </div>

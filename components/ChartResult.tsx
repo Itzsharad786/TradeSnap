@@ -26,7 +26,7 @@ export const ChartResult: React.FC<{ data: ChartAnalysisData }> = ({ data }) => 
             <div className={`${actionColor.bg} border ${actionColor.border} rounded-3xl p-6 shadow-2xl ${actionColor.glow}`}>
                 <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
                     <div>
-                        <div className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">AI Verdict</div>
+                        <div className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">Verdict</div>
                         <div className={`text-5xl font-black ${actionColor.text} flex items-center gap-3`}>
                             {actionEmoji} {actionLabel}
                         </div>
@@ -186,7 +186,7 @@ export const ChartResult: React.FC<{ data: ChartAnalysisData }> = ({ data }) => 
                     {/* Scenario Forecasts */}
                     <div className="bg-[#0f172a] p-6 rounded-3xl border border-gray-800 shadow-xl">
                         <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
-                            <span className="text-purple-400">03.</span> AI Scenarios
+                            <span className="text-purple-400">03.</span> Scenarios
                         </h3>
 
                         <div className="space-y-4">
