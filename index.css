@@ -10,4 +10,24 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.font-mono {
+  font-family: 'Roboto Mono', monospace;
+}
+
+/* Smooth transitions for theme changes */
+.bg-grid-cyan-500\/10 {
+  background-image: linear-gradient(rgb(var(--tw-gradient-to-color, transparent)) 1px, transparent 1px), linear-gradient(to right, rgb(var(--tw-gradient-to-color, transparent)) 1px, transparent 1px);
+  background-size: 1.5rem 1.5rem;
+}
+
+html.light .bg-grid-cyan-500\/10 {
+  --tw-gradient-to-color: rgba(125, 211, 252, 0.2);
+}
+
+html.dark .bg-grid-cyan-500\/10 {
+  --tw-gradient-to-color: rgba(6, 182, 212, 0.1);
 }

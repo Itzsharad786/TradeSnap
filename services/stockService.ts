@@ -21,7 +21,7 @@ export const fetchStockData = async (symbol: string): Promise<RealTimeStockData>
     try {
         // Using a CORS proxy to access Yahoo Finance API which is publicly available but CORS restricted
         const PROXY_URL = 'https://corsproxy.io/?';
-        const TARGET_URL = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol.toUpperCase()}?interval=1d&range=1mo`;
+        const TARGET_URL = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol.toUpperCase()}?interval=1d&range=1mo&t=${Date.now()}`;
 
         const response = await fetch(PROXY_URL + encodeURIComponent(TARGET_URL));
 
@@ -56,7 +56,7 @@ export const fetchStockData = async (symbol: string): Promise<RealTimeStockData>
         // Yahoo QuoteSummary endpoint is better for that: `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price,summaryDetail,defaultKeyStatistics`
 
         // Let's try to fetch Summary too.
-        const SUMMARY_URL = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol.toUpperCase()}?modules=summaryDetail,defaultKeyStatistics,price,calendarEvents`;
+        const SUMMARY_URL = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol.toUpperCase()}?modules=summaryDetail,defaultKeyStatistics,price,calendarEvents&t=${Date.now()}`;
         let quoteSummary = null;
         try {
             const summaryRes = await fetch(PROXY_URL + encodeURIComponent(SUMMARY_URL));

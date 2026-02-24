@@ -4,8 +4,69 @@ import { Icon } from '../components';
 import type { ChartAnalysisData } from '../types';
 
 export const ChartResult: React.FC<{ data: ChartAnalysisData }> = ({ data }) => {
+    const rec = (data as any).buyRecommendation;
+    const action = rec?.action || (data.verdict?.recommendation === 'Trade' ? 'Buy' : 'Wait');
+    const isBuy = action === 'Buy';
+    const isSell = action === 'Sell';
+    const isWait = action === 'Wait';
+
+    const actionColor = isBuy
+        ? { bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', text: 'text-emerald-400', badge: 'bg-emerald-500', glow: 'shadow-emerald-500/20' }
+        : isSell
+            ? { bg: 'bg-rose-500/10', border: 'border-rose-500/40', text: 'text-rose-400', badge: 'bg-rose-500', glow: 'shadow-rose-500/20' }
+            : { bg: 'bg-amber-500/10', border: 'border-amber-500/40', text: 'text-amber-400', badge: 'bg-amber-500', glow: 'shadow-amber-500/20' };
+
+    const actionEmoji = isBuy ? '🟢' : isSell ? '🔴' : '🟡';
+    const actionLabel = isBuy ? 'BUY' : isSell ? 'SELL' : 'WAIT';
+
     return (
         <div className="space-y-6 animate-fade-in-up">
+
+            {/* ── BUY / SELL / WAIT VERDICT CARD (Most prominent, shown first) ── */}
+            <div className={`${actionColor.bg} border ${actionColor.border} rounded-3xl p-6 shadow-2xl ${actionColor.glow}`}>
+                <div className="flex items-start justify-between mb-4 flex-wrap gap-4">
+                    <div>
+                        <div className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">AI Verdict</div>
+                        <div className={`text-5xl font-black ${actionColor.text} flex items-center gap-3`}>
+                            {actionEmoji} {actionLabel}
+                        </div>
+                        {rec?.summary && (
+                            <p className="text-gray-300 text-sm mt-2 max-w-xl">{rec.summary}</p>
+                        )}
+                    </div>
+                    {rec?.confidence && (
+                        <div className="text-right">
+                            <div className="text-xs text-gray-500 font-bold uppercase mb-1">Confidence</div>
+                            <div className={`text-4xl font-black ${actionColor.text}`}>{rec.confidence}%</div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Reasons */}
+                {rec?.reasons && rec.reasons.length > 0 && (
+                    <div className="mt-4">
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                            {isBuy ? '✅ Why to Buy' : isSell ? '⛔ Why to Sell' : '⏳ Why to Wait'}
+                        </div>
+                        <div className="space-y-2">
+                            {rec.reasons.map((reason: string, i: number) => (
+                                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl ${actionColor.bg} border ${actionColor.border}`}>
+                                    <span className={`font-black text-sm ${actionColor.text} mt-0.5 shrink-0`}>{i + 1}.</span>
+                                    <p className="text-sm text-gray-300 leading-relaxed">{reason}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Risk Warning */}
+                {rec?.riskWarning && (
+                    <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                        <span className="text-red-400 text-lg shrink-0">⚠️</span>
+                        <p className="text-sm text-red-300 leading-relaxed"><span className="font-bold">Risk: </span>{rec.riskWarning}</p>
+                    </div>
+                )}
+            </div>
 
             {/* Header Status Bar */}
             <div className="flex flex-wrap md:flex-nowrap gap-4 justify-between items-center bg-[#0f172a] p-4 rounded-2xl border border-gray-800">
