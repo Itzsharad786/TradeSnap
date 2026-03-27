@@ -444,10 +444,40 @@ export const pinMessage = async (groupId: string, messageId: string, isPinned: b
     await updateDoc(messageRef, { isPinned });
 };
 
+const normalizeInviteCode = (raw: string): string => {
+    const compact = (raw || '').toUpperCase().replace(/\s+/g, '').trim();
+    if (!compact) return '';
+    if (compact.startsWith('TRD') && !compact.startsWith('TRD-') && compact.length === 9) {
+        return `TRD-${compact.slice(3)}`;
+    }
+    return compact;
+};
+
+const resolveInviteCodeCandidates = (raw: string): string[] => {
+    const normalized = normalizeInviteCode(raw);
+    if (!normalized) return [];
+    const withoutDash = normalized.replace('-', '');
+    const withDash = withoutDash.startsWith('TRD') && withoutDash.length === 9
+        ? `TRD-${withoutDash.slice(3)}`
+        : normalized;
+    return Array.from(new Set([normalized, withDash, withoutDash]));
+};
+
 export const joinGroupByInviteCode = async (inviteCode: string, user: { uid: string, email: string }): Promise<string | null> => {
-    const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode), limit(1));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return null;
+    const candidates = resolveInviteCodeCandidates(inviteCode);
+    if (candidates.length === 0) return null;
+
+    let snapshot: any = null;
+    for (const candidate of candidates) {
+        const q = query(collection(db, "groups"), where("inviteCode", "==", candidate), limit(1));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            snapshot = snap;
+            break;
+        }
+    }
+
+    if (!snapshot || snapshot.empty) return null;
 
     const groupDoc = snapshot.docs[0];
     const groupId = groupDoc.id;
@@ -510,11 +540,22 @@ export const joinGroupByInviteCodeAndPassword = async (
     user: { uid: string, email: string, username?: string, avatar?: string }
 ): Promise<{ success: boolean, groupId?: string, error?: string }> => {
     try {
-        // Find group by invite code
-        const q = query(collection(db, "groups"), where("inviteCode", "==", inviteCode), limit(1));
-        const snapshot = await getDocs(q);
+        const candidates = resolveInviteCodeCandidates(inviteCode);
+        if (candidates.length === 0) {
+            return { success: false, error: "Enter a valid invite code" };
+        }
 
-        if (snapshot.empty) {
+        let snapshot: any = null;
+        for (const candidate of candidates) {
+            const q = query(collection(db, "groups"), where("inviteCode", "==", candidate), limit(1));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                snapshot = snap;
+                break;
+            }
+        }
+
+        if (!snapshot || snapshot.empty) {
             return { success: false, error: "Invalid invite code" };
         }
 
@@ -559,7 +600,11 @@ export const joinGroupByInviteCodeAndPassword = async (
         return { success: true, groupId };
     } catch (error) {
         console.error("Error joining group:", error);
-        return { success: false, error: "Failed to join group" };
+        const code = (error as any)?.code || '';
+        if (code.includes('permission-denied')) {
+            return { success: false, error: 'Permission denied. Please login again and retry.' };
+        }
+        return { success: false, error: (error as any)?.message || "Failed to join group" };
     }
 };
 

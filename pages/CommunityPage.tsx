@@ -137,7 +137,8 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
     const handleJoinByCode = async (code: string, password?: string) => {
         if (!userProfile) return;
         try {
-            const result = await FirestoreService.joinGroupByInviteCodeAndPassword(code, password || '', { uid: userProfile.uid, email: userProfile.email || 'guest' });
+            const normalizedCode = (code || '').toUpperCase().replace(/\s+/g, '').trim();
+            const result = await FirestoreService.joinGroupByInviteCodeAndPassword(normalizedCode, password || '', { uid: userProfile.uid, email: userProfile.email || 'guest' });
 
             if (result.success) {
                 setToastMsg('Joined group successfully! 🚀');
@@ -146,7 +147,9 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
             } else {
                 alert(result.error || 'Failed to join.');
             }
-        } catch (e) { alert('Error joining.'); }
+        } catch (e: any) {
+            alert(e?.message || 'Error joining group.');
+        }
     };
 
     const renderGroupCard = (g: Group, isOwned: boolean = false) => (

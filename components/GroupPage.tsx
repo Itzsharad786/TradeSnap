@@ -34,7 +34,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
         !!groupMeta?.members?.some((m: any) => m.uid === currentUid)
     );
 
-    const inviteLink = `https://tradesnap.pages.dev/join?code=${group.inviteCode}`;
+    const inviteLink = `https://tradesnap.pages.dev/join/${group.inviteCode}`;
     const shareText = `Join my trading group "${group.name}" on Tradesnap! Use code: ${group.inviteCode}`;
 
     // Load Messages
