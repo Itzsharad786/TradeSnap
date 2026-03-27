@@ -224,9 +224,9 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                         <Button onClick={handleJoin} className="bg-sky-600 text-white shadow-sky-500/20">Join</Button>
                     )}
                     {isOwner && (
-                        <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-500 transition-colors">
-                            <Icon name="settings" />
-                        </button>
+                        <Button variant="secondary" onClick={() => setShowSettings(true)}>
+                            Manage
+                        </Button>
                     )}
                 </div>
             </div>
@@ -444,6 +444,14 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                                         </div>
                                     </div>
                                 </div>
+
+                                {isOwner && (
+                                    <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-900/50">
+                                        <h4 className="font-bold text-red-600 dark:text-red-400 mb-2">Danger Zone</h4>
+                                        <p className="text-sm text-red-500/80 mb-4">Only owner can delete this group.</p>
+                                        <Button variant="danger" className="w-full" onClick={handleDeleteGroup}>Delete Group</Button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
