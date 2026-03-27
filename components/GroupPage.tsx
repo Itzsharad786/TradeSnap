@@ -26,8 +26,13 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const isOwner = userProfile?.uid === group.ownerUid;
-    const isMember = members.some(m => m.uid === userProfile?.uid);
+    const currentUid = userProfile?.uid;
+    const isOwner = currentUid === group.ownerUid;
+    const isMember = !!currentUid && (
+        members.some(m => m.uid === currentUid) ||
+        !!groupMeta?.membersUidList?.includes(currentUid) ||
+        !!groupMeta?.members?.some((m: any) => m.uid === currentUid)
+    );
 
     const inviteLink = `https://tradesnap.pages.dev/join?code=${group.inviteCode}`;
     const shareText = `Join my trading group "${group.name}" on Tradesnap! Use code: ${group.inviteCode}`;
@@ -174,6 +179,23 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
             const pwd = prompt("Enter Group Password:");
             const res = await FirestoreService.joinGroupByInviteCodeAndPassword(group.inviteCode, pwd || '', userProfile);
             if (res.success) {
+                const optimisticMember = {
+                    uid: userProfile.uid,
+                    email: userProfile.email || 'guest',
+                    joinedAt: new Date().toISOString(),
+                    username: userProfile.username,
+                    avatar: userProfile.avatar,
+                    isOnline: true
+                } as GroupMember;
+                setMembers(prev => prev.some(m => m.uid === userProfile.uid) ? prev : [...prev, optimisticMember]);
+                setGroupMeta(prev => {
+                    if (!prev) return prev;
+                    const list = prev.membersUidList || [];
+                    return {
+                        ...prev,
+                        membersUidList: list.includes(userProfile.uid) ? list : [...list, userProfile.uid]
+                    } as Group;
+                });
                 setToastMsg("You successfully joined this group.");
             } else {
                 alert(res.error || "Failed to join");
@@ -183,6 +205,23 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
 
         try {
             await FirestoreService.joinGroup(group.id, { uid: userProfile.uid, email: userProfile.email || 'guest' });
+            const optimisticMember = {
+                uid: userProfile.uid,
+                email: userProfile.email || 'guest',
+                joinedAt: new Date().toISOString(),
+                username: userProfile.username,
+                avatar: userProfile.avatar,
+                isOnline: true
+            } as GroupMember;
+            setMembers(prev => prev.some(m => m.uid === userProfile.uid) ? prev : [...prev, optimisticMember]);
+            setGroupMeta(prev => {
+                if (!prev) return prev;
+                const list = prev.membersUidList || [];
+                return {
+                    ...prev,
+                    membersUidList: list.includes(userProfile.uid) ? list : [...list, userProfile.uid]
+                } as Group;
+            });
             setToastMsg("You successfully joined this group.");
         } catch (e) {
             console.error(e);
