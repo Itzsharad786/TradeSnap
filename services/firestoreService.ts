@@ -96,6 +96,27 @@ const verifyPassword = async (password: string, hash: string): Promise<boolean> 
     return inputHash === hash;
 };
 
+const normalizeGroupType = (type: unknown, isPrivate?: boolean): 'public' | 'private' => {
+    if (typeof type === 'string') {
+        const normalized = type.toLowerCase();
+        if (normalized === 'public' || normalized === 'private') {
+            return normalized;
+        }
+    }
+    return isPrivate ? 'private' : 'public';
+};
+
+const isPublicGroup = (group: any): boolean => normalizeGroupType(group?.type, group?.isPrivate) === 'public';
+const isPrivateGroup = (group: any): boolean => normalizeGroupType(group?.type, group?.isPrivate) === 'private';
+
+const getCreatedAtMillis = (value: any): number => {
+    if (!value) return 0;
+    if (typeof value?.toMillis === 'function') return value.toMillis();
+    if (typeof value?.seconds === 'number') return value.seconds * 1000;
+    const parsed = new Date(value).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export const createGroup = async (groupData: {
     name: string;
     description: string;
@@ -108,24 +129,25 @@ export const createGroup = async (groupData: {
 }): Promise<string> => {
     try {
         const collectionRef = collection(db, "groups");
+        const normalizedType = normalizeGroupType(groupData.type, groupData.isPrivate);
 
         // Check Limits
         const q = query(collectionRef, where("ownerUid", "==", groupData.ownerUid));
         const snapshot = await getDocs(q);
         const userGroups = snapshot.docs.map(doc => doc.data());
 
-        const publicCount = userGroups.filter(g => g.type === 'public' || (!g.type && !g.isPrivate)).length;
-        const privateCount = userGroups.filter(g => g.type === 'private' || (!g.type && g.isPrivate)).length;
+        const publicCount = userGroups.filter(isPublicGroup).length;
+        const privateCount = userGroups.filter(isPrivateGroup).length;
 
-        if (groupData.type === 'public' && publicCount >= 2) {
+        if (normalizedType === 'public' && publicCount >= 2) {
             throw new Error("You have reached the limit of 2 Public Groups.");
         }
-        if (groupData.type === 'private' && privateCount >= 3) {
+        if (normalizedType === 'private' && privateCount >= 3) {
             throw new Error("You have reached the limit of 3 Private Groups.");
         }
 
         let passwordHash = null;
-        if (groupData.isPrivate && groupData.password) {
+        if (normalizedType === 'private' && groupData.password) {
             passwordHash = await hashPassword(groupData.password);
         }
 
@@ -143,8 +165,8 @@ export const createGroup = async (groupData: {
             name: groupData.name || "Unnamed Group",
             description: groupData.description || "",
             avatarUrl: groupData.avatarUrl || null,
-            isPrivate: groupData.isPrivate ?? false,
-            type: groupData.type,
+            isPrivate: normalizedType === 'private',
+            type: normalizedType,
             password: passwordHash, // Storing hash in password field for now
             passwordHash: passwordHash,
             ownerUid: groupData.ownerUid,
@@ -160,8 +182,8 @@ export const createGroup = async (groupData: {
 
         // Update user's group count and groupMembers collection
         const userRef = doc(db, "users", groupData.ownerUid);
-        const countField = groupData.type === 'public' ? 'publicGroupsCount' : 'privateGroupsCount';
-        const currentCount = (groupData.type === 'public' ? publicCount : privateCount);
+        const countField = normalizedType === 'public' ? 'publicGroupsCount' : 'privateGroupsCount';
+        const currentCount = (normalizedType === 'public' ? publicCount : privateCount);
 
         await Promise.all([
             updateDoc(userRef, { [countField]: currentCount + 1 }),
@@ -189,7 +211,7 @@ export const deleteGroup = async (groupId: string) => {
 
     if (groupSnap.exists()) {
         const groupData = groupSnap.data();
-        const groupType = groupData.type || (groupData.isPrivate ? 'private' : 'public');
+        const groupType = normalizeGroupType(groupData.type, groupData.isPrivate);
         const ownerUid = groupData.ownerUid;
 
         // Delete the group
@@ -277,28 +299,43 @@ export const leaveGroup = async (groupId: string, user: { uid: string, email: st
 
 // Fetch Public Groups (type == "public")
 export const getPublicGroups = (callback: (groups: Group[]) => void): Unsubscribe => {
-    const q = query(collection(db, "groups"), where("type", "==", "public"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "groups"), where("type", "in", ["public", "Public"]));
     return onSnapshot(q, (snapshot) => {
-        const groups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
+        const groups = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Group))
+            .sort((a, b) => getCreatedAtMillis((b as any).createdAt) - getCreatedAtMillis((a as any).createdAt));
         callback(groups);
+    }, (error) => {
+        console.error("Error loading public groups:", error);
+        callback([]);
     });
 };
 
 // Fetch Groups Owned by User
 export const getGroupsForOwner = (ownerUid: string, callback: (groups: Group[]) => void): Unsubscribe => {
-    const q = query(collection(db, "groups"), where("ownerUid", "==", ownerUid), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "groups"), where("ownerUid", "==", ownerUid));
     return onSnapshot(q, (snapshot) => {
-        const groups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
+        const groups = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Group))
+            .sort((a, b) => getCreatedAtMillis((b as any).createdAt) - getCreatedAtMillis((a as any).createdAt));
         callback(groups);
+    }, (error) => {
+        console.error("Error loading owner groups:", error);
+        callback([]);
     });
 };
 
 // Fetch Groups User is a Member of (including owned)
 export const getGroupsForUser = (userUid: string, callback: (groups: Group[]) => void): Unsubscribe => {
-    const q = query(collection(db, "groups"), where("membersUidList", "array-contains", userUid), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "groups"), where("membersUidList", "array-contains", userUid));
     return onSnapshot(q, (snapshot) => {
-        const groups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
+        const groups = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Group))
+            .sort((a, b) => getCreatedAtMillis((b as any).createdAt) - getCreatedAtMillis((a as any).createdAt));
         callback(groups);
+    }, (error) => {
+        console.error("Error loading user groups:", error);
+        callback([]);
     });
 };
 
@@ -396,8 +433,8 @@ export const getUserGroupCounts = async (userId: string): Promise<{ publicCount:
         const snapshot = await getDocs(q);
         const userGroups = snapshot.docs.map(doc => doc.data());
 
-        const publicCount = userGroups.filter(g => g.type === 'public' || (!g.type && !g.isPrivate)).length;
-        const privateCount = userGroups.filter(g => g.type === 'private' || (!g.type && g.isPrivate)).length;
+        const publicCount = userGroups.filter(isPublicGroup).length;
+        const privateCount = userGroups.filter(isPrivateGroup).length;
 
         return { publicCount, privateCount };
     } catch (error) {
