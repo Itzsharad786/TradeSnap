@@ -19,12 +19,14 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
     const [uploading, setUploading] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [members, setMembers] = useState<GroupMember[]>(group.members || []);
+    const [groupMeta, setGroupMeta] = useState<Group | null>(group);
     const [toastMsg, setToastMsg] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
+    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const isOwner = userProfile?.uid === group.ownerUid;
-    const isMember = group.members?.some(m => m.uid === userProfile?.uid);
+    const isMember = members.some(m => m.uid === userProfile?.uid);
 
     const inviteLink = `https://tradesnap.pages.dev/join?code=${group.inviteCode}`;
     const shareText = `Join my trading group "${group.name}" on Tradesnap! Use code: ${group.inviteCode}`;
@@ -49,6 +51,41 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
             .then(setMembers)
             .catch(console.error);
     }, [group.id]);
+
+    // Group metadata listener (typing/presence/live fields)
+    useEffect(() => {
+        const unsubscribe = FirestoreService.listenToGroup(group.id, (g) => {
+            if (g) setGroupMeta(g);
+        });
+        return () => unsubscribe();
+    }, [group.id]);
+
+    // Mark messages as seen when chat is open
+    useEffect(() => {
+        if (!isMember || activeTab !== 'chat' || !userProfile?.uid) return;
+        const unseen = messages.filter((m) => {
+            if (m.authorId === userProfile.uid) return false;
+            const seen = Array.isArray(m.seenBy)
+                ? m.seenBy.includes(userProfile.uid)
+                : !!m.seenBy?.[userProfile.uid];
+            return !seen;
+        });
+
+        if (unseen.length === 0) return;
+        unseen.forEach((m) => {
+            FirestoreService.markGroupMessageSeen(group.id, m.id, userProfile.uid!);
+        });
+    }, [messages, activeTab, isMember, group.id, userProfile?.uid]);
+
+    // Presence heartbeat (active in last 90s)
+    useEffect(() => {
+        if (!isMember || !userProfile?.uid) return;
+        FirestoreService.setGroupPresenceStatus(group.id, userProfile.uid, 'active');
+        const interval = setInterval(() => {
+            FirestoreService.setGroupPresenceStatus(group.id, userProfile.uid!, 'active');
+        }, 30000);
+        return () => clearInterval(interval);
+    }, [group.id, isMember, userProfile?.uid]);
 
     const handleSendMessage = async () => {
         if (!msgText.trim() || !userProfile) return;
@@ -168,6 +205,45 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
         await FirestoreService.deleteMessage(group.id, msgId);
     };
 
+    const handleTypingChange = (value: string) => {
+        setMsgText(value);
+        if (!userProfile?.uid || !isMember) return;
+
+        FirestoreService.setGroupTypingStatus(group.id, userProfile.uid, true);
+        FirestoreService.setGroupPresenceStatus(group.id, userProfile.uid, 'focusing');
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            FirestoreService.setGroupTypingStatus(group.id, userProfile.uid!, false);
+            FirestoreService.setGroupPresenceStatus(group.id, userProfile.uid!, 'active');
+        }, 2000);
+    };
+
+    const getSeenCount = (msg: GroupChatMessage): number => {
+        if (Array.isArray(msg.seenBy)) return msg.seenBy.length;
+        if (msg.seenBy && typeof msg.seenBy === 'object') return Object.keys(msg.seenBy).length;
+        return 0;
+    };
+
+    const activeTypingUsers = Object.keys(groupMeta?.typingStatus || {}).filter(uid => uid !== userProfile?.uid);
+
+    const getPresenceEmoji = (uid: string): string => {
+        const p: any = groupMeta?.presenceStatus?.[uid];
+        if (!p) return '😔';
+        const lastActiveMs = p.lastActive?.toMillis ? p.lastActive.toMillis() : (p.lastActive?.seconds ? p.lastActive.seconds * 1000 : 0);
+        const isRecentlyActive = lastActiveMs && (Date.now() - lastActiveMs <= 90000);
+        if (!isRecentlyActive) return '😔';
+        return p.status === 'focusing' ? '😊' : '🙂';
+    };
+
+    useEffect(() => {
+        return () => {
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+        };
+    }, []);
+
     const shareToSocial = (platform: 'whatsapp' | 'telegram' | 'instagram') => {
         const text = encodeURIComponent(shareText + "\n" + inviteLink);
         if (platform === 'whatsapp') {
@@ -248,6 +324,11 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                 {activeTab === 'chat' && (
                     <div className="h-full flex flex-col">
                         <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                            {activeTypingUsers.length > 0 && (
+                                <div className="text-xs text-sky-500 bg-sky-500/10 border border-sky-500/20 rounded-xl px-3 py-2 inline-block">
+                                    Typing... {activeTypingUsers.length} user{activeTypingUsers.length > 1 ? 's' : ''}
+                                </div>
+                            )}
                             {messages.length === 0 && (
                                 <div className="text-center text-gray-400 py-10">
                                     <p>No messages yet. Start the conversation!</p>
@@ -288,6 +369,13 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                                                 </button>
                                             </div>
                                         )}
+
+                                        {getSeenCount(msg) > 1 && (
+                                            <div className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                                <span>👁️</span>
+                                                <span>{getSeenCount(msg)}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -313,7 +401,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
 
                                 <input
                                     value={msgText}
-                                    onChange={e => setMsgText(e.target.value)}
+                                    onChange={e => handleTypingChange(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
                                     placeholder="Type a message..."
                                     className="flex-grow bg-gray-100 dark:bg-gray-800 border-0 rounded-full px-4 py-3 focus:ring-2 ring-sky-500 outline-none transition-all"
@@ -357,6 +445,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                                                 {m.uid === group.ownerUid && <Icon name="badge" className="h-3 w-3 text-amber-500" />}
                                             </div>
                                             <div className="text-xs text-gray-500">
+                                                <span className="font-bold mr-1">{getPresenceEmoji(m.uid)}</span>
                                                 {m.isOnline ? <span className="text-emerald-500 font-bold">Online</span> : `Last seen ${m.lastSeen ? new Date(m.lastSeen.seconds * 1000).toLocaleDateString() : 'recently'}`}
                                             </div>
                                         </div>

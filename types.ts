@@ -84,7 +84,7 @@ export interface GroupChatMessage {
   reactions: { [key: string]: any };
   type: 'text' | 'image';
   mediaUrl?: string;
-  seenBy?: string[]; // Array of user IDs who have seen the message
+  seenBy?: string[] | { [uid: string]: number }; // Phase-2 compatible: array or map
   isPinned?: boolean; // Whether message is pinned
 }
 
@@ -115,6 +115,8 @@ export interface Group {
   createdAt: any;
   type: 'public' | 'private'; // Enforced type
   topic?: string;
+  typingStatus?: { [uid: string]: any };
+  presenceStatus?: { [uid: string]: { status: 'focusing' | 'active'; lastActive: any } };
   lastMessage?: {
     text: string;
     timestamp: any;

@@ -17,7 +17,8 @@ import {
     arrayRemove,
     deleteDoc,
     increment,
-    runTransaction
+    runTransaction,
+    deleteField
 } from "firebase/firestore";
 import { db } from './firebase';
 import type { UserProfile, Group, GroupChatMessage, GroupMember } from '../types';
@@ -350,9 +351,24 @@ export const getGroupMessages = (groupId: string, callback: (messages: GroupChat
         const messages = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
-            timestamp: doc.data().timestamp?.toMillis ? doc.data().timestamp.toMillis() : Date.now()
+            timestamp: doc.data().timestamp?.toMillis ? doc.data().timestamp.toMillis() : Date.now(),
+            seenBy: doc.data().seenBy || []
         } as GroupChatMessage));
         callback(messages);
+    });
+};
+
+export const listenToGroup = (groupId: string, callback: (group: Group | null) => void): Unsubscribe => {
+    const groupRef = doc(db, "groups", groupId);
+    return onSnapshot(groupRef, (snap) => {
+        if (!snap.exists()) {
+            callback(null);
+            return;
+        }
+        callback({ id: snap.id, ...(snap.data() as any) } as Group);
+    }, (error) => {
+        console.error("Error listening group metadata:", error);
+        callback(null);
     });
 };
 
@@ -360,6 +376,7 @@ export const sendMessageToGroup = async (groupId: string, message: any) => {
     const messagesRef = collection(db, "groups", groupId, "messages");
     await addDoc(messagesRef, {
         ...message,
+        seenBy: message.authorId ? [message.authorId] : [],
         timestamp: serverTimestamp()
     });
 
@@ -372,6 +389,49 @@ export const sendMessageToGroup = async (groupId: string, message: any) => {
             authorName: message.authorName
         }
     });
+};
+
+export const markGroupMessageSeen = async (groupId: string, messageId: string, uid: string): Promise<void> => {
+    try {
+        const messageRef = doc(db, "groups", groupId, "messages", messageId);
+        await updateDoc(messageRef, {
+            seenBy: arrayUnion(uid)
+        });
+    } catch (error) {
+        // Keep silent in UI; this is non-blocking metadata
+        console.warn("Could not mark message as seen:", error);
+    }
+};
+
+export const setGroupTypingStatus = async (groupId: string, uid: string, isTyping: boolean): Promise<void> => {
+    try {
+        const groupRef = doc(db, "groups", groupId);
+        const field = `typingStatus.${uid}`;
+        await updateDoc(groupRef, {
+            [field]: isTyping ? serverTimestamp() : deleteField()
+        });
+    } catch (error) {
+        console.warn("Could not update typing status:", error);
+    }
+};
+
+export const setGroupPresenceStatus = async (
+    groupId: string,
+    uid: string,
+    status: 'focusing' | 'active' = 'active'
+): Promise<void> => {
+    try {
+        const groupRef = doc(db, "groups", groupId);
+        const field = `presenceStatus.${uid}`;
+        await updateDoc(groupRef, {
+            [field]: {
+                status,
+                lastActive: serverTimestamp()
+            }
+        });
+    } catch (error) {
+        console.warn("Could not update presence status:", error);
+    }
 };
 
 export const deleteMessage = async (groupId: string, messageId: string) => {

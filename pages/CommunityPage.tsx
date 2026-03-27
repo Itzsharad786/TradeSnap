@@ -1,9 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { PageWrapper } from './PageWrapper';
 import { GroupPage } from '../components/GroupPage';
-import { Icon, Button, Card, Avatar, Loader, Toast, CreateGroupModal, JoinByInviteModal } from '../components';
+import { Icon, Button, Card, Avatar, Loader, Toast, CreateGroupModal, JoinByInviteModal, Modal } from '../components';
 import * as FirestoreService from '../services/firestoreService';
 import type { UserProfile, Group } from '../types';
+
+const COMMUNITY_RECENT_SEARCHES_KEY = 'tradesnap_community_recent_searches';
+
+const CommunitySearchModal: React.FC<{
+    initialValue: string;
+    recentSearches: string[];
+    onClose: () => void;
+    onApplySearch: (query: string) => void;
+}> = ({ initialValue, recentSearches, onClose, onApplySearch }) => {
+    const [value, setValue] = useState(initialValue);
+
+    const submit = () => {
+        onApplySearch(value.trim());
+        onClose();
+    };
+
+    return (
+        <Modal onClose={onClose}>
+            <h2 className="text-xl font-bold mb-4">Search Community</h2>
+            <div className="space-y-4">
+                <div className="relative">
+                    <Icon name="search" className="absolute left-4 top-3.5 text-gray-400 h-5 w-5" />
+                    <input
+                        autoFocus
+                        value={value}
+                        onChange={e => setValue(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && submit()}
+                        placeholder="Search groups, topics..."
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-100 dark:bg-[#111625] border border-gray-200 dark:border-gray-800 focus:border-sky-500 outline-none"
+                    />
+                </div>
+
+                {recentSearches.length > 0 && (
+                    <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-2">Recent Searches</p>
+                        <div className="flex flex-wrap gap-2">
+                            {recentSearches.map((item) => (
+                                <button
+                                    key={item}
+                                    onClick={() => { onApplySearch(item); onClose(); }}
+                                    className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-sm hover:bg-sky-100 dark:hover:bg-sky-900/30"
+                                >
+                                    {item}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                <Button className="w-full" onClick={submit}>Apply Search</Button>
+            </div>
+        </Modal>
+    );
+};
 
 // --- COMMUNITY COMPONENTS ---
 const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: Group) => void }> = ({ userProfile, onSelectGroup }) => {
@@ -14,8 +68,20 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
     const [loading, setLoading] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
-    const [search, setSearch] = useState('');
+    const [showSearchModal, setShowSearchModal] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [recentSearches, setRecentSearches] = useState<string[]>([]);
+    const [visibleCount, setVisibleCount] = useState(20);
     const [toastMsg, setToastMsg] = useState('');
+
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem(COMMUNITY_RECENT_SEARCHES_KEY);
+            if (raw) setRecentSearches(JSON.parse(raw));
+        } catch (error) {
+            console.warn('Could not load recent searches', error);
+        }
+    }, []);
 
     // Always fetch owned groups to get counts for Create Modal
     useEffect(() => {
@@ -103,11 +169,27 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
         </Card>
     );
 
-    const filteredPublic = publicGroups.filter(g => g.name.toLowerCase().includes(search.toLowerCase()) || g.description?.toLowerCase().includes(search.toLowerCase()));
+    const applySearch = (query: string) => {
+        setSearchQuery(query);
+        setVisibleCount(20);
 
-    // Calculate counts for limits
-    const publicCount = ownedGroups.filter(g => g.type === 'public' || (!g.type && !g.isPrivate)).length;
-    const privateCount = ownedGroups.filter(g => g.type === 'private' || (!g.type && g.isPrivate)).length;
+        if (!query) return;
+        const updated = [query, ...recentSearches.filter(s => s.toLowerCase() !== query.toLowerCase())].slice(0, 8);
+        setRecentSearches(updated);
+        localStorage.setItem(COMMUNITY_RECENT_SEARCHES_KEY, JSON.stringify(updated));
+    };
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const filteredPublic = publicGroups.filter(g => {
+        const hay = `${g.name || ''} ${g.description || ''} ${g.topic || ''}`.toLowerCase();
+        return !normalizedQuery || hay.includes(normalizedQuery);
+    });
+    const pagedGroups = filteredPublic.slice(0, visibleCount);
+    const hasMore = visibleCount < filteredPublic.length;
+
+    // Calculate counts for limits (case-insensitive for legacy data)
+    const publicCount = ownedGroups.filter(g => (g.type?.toLowerCase() === 'public') || (!g.type && !g.isPrivate)).length;
+    const privateCount = ownedGroups.filter(g => (g.type?.toLowerCase() === 'private') || (!g.type && g.isPrivate)).length;
 
     return (
         <div className="space-y-6">
@@ -130,17 +212,31 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
                     {activeTab === 'explore' && (
                         <>
                             <div className="relative mb-6">
-                                <Icon name="search" className="absolute left-4 top-3.5 text-gray-400 h-5 w-5" />
-                                <input
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    placeholder="Search communities..."
-                                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-white dark:bg-[#111625] border border-gray-200 dark:border-gray-800 focus:border-sky-500 outline-none transition-all shadow-sm"
-                                />
+                                <button
+                                    onClick={() => setShowSearchModal(true)}
+                                    className="w-full text-left pl-12 pr-4 py-3 rounded-xl bg-white dark:bg-[#111625] border border-gray-200 dark:border-gray-800 hover:border-sky-500 transition-all shadow-sm"
+                                >
+                                    <Icon name="search" className="absolute left-4 top-3.5 text-gray-400 h-5 w-5" />
+                                    <span className={`${searchQuery ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+                                        {searchQuery || 'Search communities...'}
+                                    </span>
+                                </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {filteredPublic.map(g => renderGroupCard(g, userProfile?.uid === g.ownerUid))}
+                                {pagedGroups.map(g => renderGroupCard(g, userProfile?.uid === g.ownerUid))}
                             </div>
+
+                            {pagedGroups.length === 0 && (
+                                <div className="text-center text-gray-500 py-10">No groups found for this search.</div>
+                            )}
+
+                            {hasMore && (
+                                <div className="pt-6 flex justify-center">
+                                    <Button variant="secondary" onClick={() => setVisibleCount(v => v + 20)}>
+                                        Load more (20)
+                                    </Button>
+                                </div>
+                            )}
                         </>
                     )}
                     {activeTab === 'my_groups' && (
@@ -177,6 +273,14 @@ const GroupList: React.FC<{ userProfile: UserProfile | null, onSelectGroup: (g: 
             )}
             {showCreate && <CreateGroupModal onClose={() => setShowCreate(false)} onCreate={handleCreateGroup} publicCount={publicCount} privateCount={privateCount} />}
             {showJoinModal && <JoinByInviteModal onClose={() => setShowJoinModal(false)} onJoin={handleJoinByCode} />}
+            {showSearchModal && (
+                <CommunitySearchModal
+                    initialValue={searchQuery}
+                    recentSearches={recentSearches}
+                    onClose={() => setShowSearchModal(false)}
+                    onApplySearch={applySearch}
+                />
+            )}
         </div>
     );
 };
