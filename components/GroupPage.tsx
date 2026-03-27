@@ -19,6 +19,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
     const [uploading, setUploading] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [members, setMembers] = useState<GroupMember[]>(group.members || []);
+    const [membersLoading, setMembersLoading] = useState(false);
     const [groupMeta, setGroupMeta] = useState<Group | null>(group);
     const [toastMsg, setToastMsg] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,9 +48,20 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
 
     // Load members with details
     useEffect(() => {
+        setMembersLoading(true);
         FirestoreService.getGroupMembersWithDetails(group.id)
-            .then(setMembers)
-            .catch(console.error);
+            .then((loaded) => {
+                if (Array.isArray(loaded) && loaded.length > 0) {
+                    setMembers(loaded);
+                } else {
+                    setMembers(group.members || []);
+                }
+            })
+            .catch((error) => {
+                console.error(error);
+                setMembers(group.members || []);
+            })
+            .finally(() => setMembersLoading(false));
     }, [group.id]);
 
     // Group metadata listener (typing/presence/live fields)
@@ -226,6 +238,19 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
     };
 
     const activeTypingUsers = Object.keys(groupMeta?.typingStatus || {}).filter(uid => uid !== userProfile?.uid);
+
+    const getMemberName = (m: GroupMember): string => {
+        if (m.username && m.username.trim()) return m.username;
+        if (m.email && m.email.includes('@')) return m.email.split('@')[0];
+        if (m.uid) return `user_${m.uid.slice(0, 6)}`;
+        return 'Unknown User';
+    };
+
+    const getJoinedDateLabel = (m: GroupMember): string => {
+        const parsed = new Date(m.joinedAt || '');
+        if (Number.isNaN(parsed.getTime())) return 'Recently';
+        return parsed.toLocaleDateString();
+    };
 
     const getPresenceEmoji = (uid: string): string => {
         const p: any = groupMeta?.presenceStatus?.[uid];
@@ -429,6 +454,13 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                             <h3 className="font-bold">Members</h3>
                             <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">{members.length}</span>
                         </div>
+                        {membersLoading ? (
+                            <Loader text="Loading members..." />
+                        ) : members.length === 0 ? (
+                            <div className="text-center text-gray-500 py-10">
+                                No members found in this group.
+                            </div>
+                        ) : (
                         <div className="space-y-2">
                             {members.map((m, i) => (
                                 <div key={i} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-sky-500/30 transition-colors">
@@ -441,7 +473,7 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                                         </div>
                                         <div>
                                             <div className="font-bold text-sm flex items-center gap-2">
-                                                {m.username || m.email.split('@')[0]}
+                                                {getMemberName(m)}
                                                 {m.uid === group.ownerUid && <Icon name="badge" className="h-3 w-3 text-amber-500" />}
                                             </div>
                                             <div className="text-xs text-gray-500">
@@ -452,11 +484,12 @@ export const GroupPage: React.FC<GroupPageProps> = ({ group, userProfile, onBack
                                     </div>
                                     <div className="text-right">
                                         <div className="text-[10px] text-gray-400 font-mono">Joined</div>
-                                        <div className="text-xs font-medium">{new Date(m.joinedAt).toLocaleDateString()}</div>
+                                        <div className="text-xs font-medium">{getJoinedDateLabel(m)}</div>
                                     </div>
                                 </div>
                             ))}
                         </div>
+                        )}
                     </div>
                 )}
 
