@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { PageWrapper } from './PageWrapper';
-import { Card, Button, Loader } from '../components';
-import * as AiService from '../services/geminiService';
+import { Card } from '../components';
 import type { TraderLabTopic } from '../types';
 import TOPICS_DATA from '../topics.json';
 
@@ -9,16 +8,6 @@ const TOPICS: TraderLabTopic[] = TOPICS_DATA as TraderLabTopic[];
 
 export const TraderLabPage: React.FC = () => {
     const [activeTopic, setActiveTopic] = useState<TraderLabTopic | null>(null);
-    const [explanation, setExplanation] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const handleExplain = async () => {
-        if (!activeTopic) return;
-        setLoading(true);
-        const result = await AiService.explainConcept(`${activeTopic.title} - ${activeTopic.description}`);
-        setExplanation(result);
-        setLoading(false);
-    };
 
     return (
         <PageWrapper>
@@ -35,8 +24,7 @@ export const TraderLabPage: React.FC = () => {
                 <div className="max-w-2xl mx-auto">
                     <button onClick={() => setActiveTopic(null)} className="mb-4 text-sm text-gray-500">← Back</button>
                     <h2 className="text-3xl font-bold mb-4">{activeTopic.title}</h2>
-                    <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-xl mb-6">{loading ? <Loader text="AI Explaining..." /> : (explanation || activeTopic.description)}</div>
-                    <Button onClick={handleExplain} disabled={loading} className="w-full">Explain with AI</Button>
+                    <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-xl mb-6">{activeTopic.description}</div>
                 </div>
             )}
         </PageWrapper>
